@@ -10,14 +10,19 @@ const camera = {
     y: 0
   },
   position: {
-    x:0,
-    y:-1,
-    z:4
+    x: 0,
+    y: -1,
+    z: 4
   },
-  lookAt: {
+  direction: {
     x: 0,
     y: 0,
     z: 0
+  },
+  lookAt: {
+    x: 0,
+    y: -1,
+    z: 5
   }
 };
 
@@ -105,7 +110,7 @@ function createSceneGraph(gl, resources) {
     lightNode.specular = [1, 1, 1, 1];
     lightNode.position = [0, 0, 0];
 
-    translateLight = new TransformationSGNode(glm.translate(0,-9,9)); //translating the light is the same as setting the light position
+    translateLight = new TransformationSGNode(glm.translate(5,-5,20)); //translating the light is the same as setting the light position
 
     translateLight.append(lightNode);
     translateLight.append(createLightSphere()); //add sphere for debugging: since we use 0,0,0 as our light position the sphere is at the same position as the light source
@@ -114,8 +119,8 @@ function createSceneGraph(gl, resources) {
 
   {
     //Planet
-    planetNode = new RenderSGNode(makeSphere(0.2,30,30));
-    translatePlanet = new TransformationSGNode(glm.translate(0,0,0));
+    planetNode = new RenderSGNode(makeSphere(2,30,30));
+    translatePlanet = new TransformationSGNode(glm.translate(-3,2,15));
     translatePlanet.append(planetNode);
 
     root.append(translatePlanet);
@@ -237,15 +242,15 @@ function initInteraction(canvas) {
   		camera.rotation.x += delta.x * speed;
   		camera.rotation.y += delta.y * speed;
 
-      let direction = {
-        x: Math.cos(camera.rotation.y) * Math.sin(camera.rotation.x),
-        y: Math.sin(camera.rotation.y),
-        z: Math.cos(camera.rotation.x) * Math.cos(camera.rotation.y)
-      };
+      // change direction (needed for movement)
+      camera.direction.x = Math.cos(camera.rotation.y) * Math.sin(camera.rotation.x);
+      camera.direction.y = Math.sin(camera.rotation.y);
+      camera.direction.z = Math.cos(camera.rotation.y) * Math.cos(camera.rotation.x);
 
-      camera.lookAt.x = camera.position.x + direction.x;
-      camera.lookAt.y = camera.position.y + direction.y;
-      camera.lookAt.z = camera.position.z + direction.z;
+      // change lookAt-vector: camera position + camera direction
+      camera.lookAt.x = camera.position.x + camera.direction.x;
+      camera.lookAt.y = camera.position.y + camera.direction.y;
+      camera.lookAt.z = camera.position.z + camera.direction.z;
     }
     mouse.pos = pos;
   });
@@ -259,34 +264,34 @@ function initInteraction(canvas) {
     if (event.code === 'KeyR') {
       camera.rotation.x = 0;
   		camera.rotation.y = 0;
+
+      camera.position.x = 0;
+      camera.position.y = -1;
+      camera.position.z = 4;
+
+      camera.lookAt.x = 0;
+      camera.lookAt.y = -1;
+      camera.lookAt.z = 5;
     } else if (event.code === 'KeyW') {
-      let direction = {
-        x: Math.cos(camera.rotation.y) * Math.sin(camera.rotation.x),
-        y: Math.sin(camera.rotation.y),
-        z: Math.cos(camera.rotation.x) * Math.cos(camera.rotation.y)
-      };
       let speed = 0.1;
 
-      camera.position.x += direction.x * speed;
-      camera.position.y += direction.y * speed;
-      camera.position.z += direction.z * speed;
-      camera.lookAt.x = camera.position.x + direction.x;
-      camera.lookAt.y = camera.position.y + direction.y;
-      camera.lookAt.z = camera.position.z + direction.z;
+      camera.position.x += camera.direction.x * speed;
+      camera.position.y += camera.direction.y * speed;
+      camera.position.z += camera.direction.z * speed;
+
+      camera.lookAt.x = camera.position.x + camera.direction.x;
+      camera.lookAt.y = camera.position.y + camera.direction.y;
+      camera.lookAt.z = camera.position.z + camera.direction.z;
    } else if (event.code === 'KeyS') {
-     let direction = {
-       x: Math.cos(camera.rotation.y) * Math.sin(camera.rotation.x),
-       y: Math.sin(camera.rotation.y),
-       z: Math.cos(camera.rotation.x) * Math.cos(camera.rotation.y)
-     };
      let speed = 0.1;
 
-     camera.position.x -= direction.x * speed;
-     camera.position.y -= direction.y * speed;
-     camera.position.z -= direction.z * speed;
-     camera.lookAt.x = camera.position.x + direction.x;
-     camera.lookAt.y = camera.position.y + direction.y;
-     camera.lookAt.z = camera.position.z + direction.z;
+     camera.position.x -= camera.direction.x * speed;
+     camera.position.y -= camera.direction.y * speed;
+     camera.position.z -= camera.direction.z * speed;
+
+     camera.lookAt.x = camera.position.x + camera.direction.x;
+     camera.lookAt.y = camera.position.y + camera.direction.y;
+     camera.lookAt.z = camera.position.z + camera.direction.z;
     }
   });
 }
