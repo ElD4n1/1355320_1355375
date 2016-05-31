@@ -13,6 +13,11 @@ const camera = {
     x:0,
     y:-1,
     z:4
+  },
+  lookAt: {
+    x: 0,
+    y: 0,
+    z: 0
   }
 };
 
@@ -81,7 +86,7 @@ function createSceneGraph(gl, resources) {
 
   //add skybox by putting large sphere around us
   var skybox = new EnvironmentSGNode(envcubetexture,4,false,
-                  new RenderSGNode(makeSphere(20)));
+                  new RenderSGNode(makeSphere(50)));
   root.append(skybox);
 
   //light debug helper function
@@ -132,13 +137,9 @@ function render(timeInMilliseconds) {
   const context = createSGContext(gl);
   context.projectionMatrix = mat4.perspective(mat4.create(), 30, gl.drawingBufferWidth / gl.drawingBufferHeight, 0.01, 100);
   //very primitive camera implementation
-  let lookAtMatrix = mat4.lookAt(mat4.create(), [camera.position.x,camera.position.y,camera.position.z], [0,0,0], [0,1,0]);
-  let mouseRotateMatrix = mat4.multiply(mat4.create(),
-                          glm.rotateX(camera.rotation.y),
-                          glm.rotateY(camera.rotation.x));
+  let lookAtMatrix = mat4.lookAt(mat4.create(), [camera.position.x,camera.position.y,camera.position.z], [camera.lookAt.x, camera.lookAt.y, camera.lookAt.z], [0,1,0]);
 
-  context.viewMatrix = mat4.multiply(mat4.create(), lookAtMatrix, mouseRotateMatrix);
-
+  context.viewMatrix = lookAtMatrix;
 
   //get inverse view matrix to allow computing eye-to-light matrix
   context.invViewMatrix = mat4.invert(mat4.create(), context.viewMatrix);
@@ -232,8 +233,19 @@ function initInteraction(canvas) {
     const delta = { x : mouse.pos.x - pos.x, y: mouse.pos.y - pos.y };
     if (mouse.leftButtonDown) {
       //add the relative movement of the mouse to the rotation variables
-  		camera.rotation.x += delta.x;
-  		camera.rotation.y += delta.y;
+      let speed = 0.01;
+  		camera.rotation.x += delta.x * speed;
+  		camera.rotation.y += delta.y * speed;
+
+      let direction = {
+        x: Math.cos(camera.rotation.y) * Math.sin(camera.rotation.x),
+        y: Math.sin(camera.rotation.y),
+        z: Math.cos(camera.rotation.x) * Math.cos(camera.rotation.y)
+      };
+
+      camera.lookAt.x = camera.position.x + direction.x;
+      camera.lookAt.y = camera.position.y + direction.y;
+      camera.lookAt.z = camera.position.z + direction.z;
     }
     mouse.pos = pos;
   });
@@ -248,20 +260,33 @@ function initInteraction(canvas) {
       camera.rotation.x = 0;
   		camera.rotation.y = 0;
     } else if (event.code === 'KeyW') {
-      let lookAtMatrix = mat4.lookAt(mat4.create(), [camera.position.x,camera.position.y,camera.position.z], [0,0,0], [0,1,0]);
-      let mouseRotateMatrix = mat4.multiply(mat4.create(),
-                              glm.rotateX(camera.rotation.y),
-                              glm.rotateY(camera.rotation.x));
-      let cameraMatrix = mat4.multiply(mat4.create(), lookAtMatrix, mouseRotateMatrix);
+      let direction = {
+        x: Math.cos(camera.rotation.y) * Math.sin(camera.rotation.x),
+        y: Math.sin(camera.rotation.y),
+        z: Math.cos(camera.rotation.x) * Math.cos(camera.rotation.y)
+      };
+      let speed = 0.1;
 
-     camera.position.x += Math.cos(camera.rotation.x) * Math.cos(camera.rotation.y);
-     camera.position.y += Math.sin(camera.rotation.x) * Math.cos(camera.rotation.y);
-     camera.position.z += Math.sin(camera.rotation.y) ;
-
+      camera.position.x += direction.x * speed;
+      camera.position.y += direction.y * speed;
+      camera.position.z += direction.z * speed;
+      camera.lookAt.x = camera.position.x + direction.x;
+      camera.lookAt.y = camera.position.y + direction.y;
+      camera.lookAt.z = camera.position.z + direction.z;
    } else if (event.code === 'KeyS') {
-     camera.position.x -= Math.cos(camera.rotation.x) * Math.cos(camera.rotation.y);
-     camera.position.y -= Math.sin(camera.rotation.x) * Math.cos(camera.rotation.y);
-     camera.position.z -= Math.sin(camera.rotation.y) ;
+     let direction = {
+       x: Math.cos(camera.rotation.y) * Math.sin(camera.rotation.x),
+       y: Math.sin(camera.rotation.y),
+       z: Math.cos(camera.rotation.x) * Math.cos(camera.rotation.y)
+     };
+     let speed = 0.1;
+
+     camera.position.x -= direction.x * speed;
+     camera.position.y -= direction.y * speed;
+     camera.position.z -= direction.z * speed;
+     camera.lookAt.x = camera.position.x + direction.x;
+     camera.lookAt.y = camera.position.y + direction.y;
+     camera.lookAt.z = camera.position.z + direction.z;
     }
   });
 }
