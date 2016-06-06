@@ -140,16 +140,10 @@ function createSceneGraph(gl, resources) {
     root.append(planetNode);
   }
 
-
-<<<<<<< HEAD
     let moonNode = new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_texture), [
                     new AdvancedTextureSGNode(resources.moon_texture,
                       new RenderSGNode(makeSphere(3,10,10)))]
                 );
-=======
-    let moonNode =
-                  new RenderSGNode(makeSphere(3,10,10)                );
->>>>>>> origin/master
 
     orbitMoon = new TransformationSGNode(mat4.create());
 
