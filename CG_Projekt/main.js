@@ -7,9 +7,9 @@ const camera = {
     y: 0
   },
   position: {
-    x: 25,
+    x: 1,
     y: -15,
-    z:-10
+    z:-1
   },
   direction: {
     x: 0,
@@ -140,6 +140,11 @@ function createSceneGraph(gl, resources) {
     root.append(planetNode);
   }
 
+  let dalek = createDalek();
+  let translateDalek = new TransformationSGNode(glm.translate(0,-13,0));
+  translateDalek.append(dalek);
+  planetNode.append(translateDalek);
+
     let moonNode = new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_texture), [
                     new AdvancedTextureSGNode(resources.moon_texture,
                       new RenderSGNode(makeSphere(3,10,10)))]
@@ -163,6 +168,198 @@ function createSceneGraph(gl, resources) {
 
 
   return root;
+}
+
+// Returns a Dalek node
+function createDalek(){
+  let dalek = new RenderSGNode(makeQuad(1,1.5,0.2));
+  dalek.append(new TransformationSGNode(glm.rotateY(270),new TransformationSGNode(glm.rotateX(197),new RenderSGNode(makeTrapeze(1.5,0.6,0.7,0.2)))));
+  dalek.append(new TransformationSGNode(glm.translate(1,0,0),new TransformationSGNode(glm.rotateY(270),new TransformationSGNode(glm.rotateX(163),new RenderSGNode(makeTrapeze(1.5,0.6,0.7,0.2))))));
+  dalek.append(new TransformationSGNode(glm.rotateX(163),new RenderSGNode(makeTrapeze(1,0.6,0.7,0.2))));
+  dalek.append(new TransformationSGNode(glm.translate(0,0,1.5),new TransformationSGNode(glm.rotateX(226.5),new RenderSGNode(makeTrapeze(1,0.6,1,0.2)))));
+  dalek.append(new TransformationSGNode(glm.translate(0.2,-0.9,0.2),new RenderSGNode(makeQuad(0.6,0.6,0.3))));
+  dalek.append(new TransformationSGNode(glm.translate(0.5,-0.9,0.5),new RenderSGNode(makeSphere(0.3,15,15))));
+//Spheres on body
+  dalek.append(new TransformationSGNode(glm.translate(0.2,-0.5,0.3),new RenderSGNode(makeSphere(0.1,10,10))));
+  dalek.append(new TransformationSGNode(glm.translate(0.2,-0.5,0.6),new RenderSGNode(makeSphere(0.1,10,10))));
+  dalek.append(new TransformationSGNode(glm.translate(0.1,-0.2,0.3),new RenderSGNode(makeSphere(0.1,10,10))));
+  dalek.append(new TransformationSGNode(glm.translate(0.1,-0.2,0.6),new RenderSGNode(makeSphere(0.1,10,10))));
+  dalek.append(new TransformationSGNode(glm.translate(0.1,-0.2,0.9),new RenderSGNode(makeSphere(0.1,10,10))));
+  dalek.append(new TransformationSGNode(glm.translate(0.8,-0.5,0.3),new RenderSGNode(makeSphere(0.1,10,10))));
+  dalek.append(new TransformationSGNode(glm.translate(0.8,-0.5,0.6),new RenderSGNode(makeSphere(0.1,10,10))));
+  dalek.append(new TransformationSGNode(glm.translate(0.9,-0.2,0.3),new RenderSGNode(makeSphere(0.1,10,10))));
+  dalek.append(new TransformationSGNode(glm.translate(0.9,-0.2,0.6),new RenderSGNode(makeSphere(0.1,10,10))));
+  dalek.append(new TransformationSGNode(glm.translate(0.9,-0.2,0.9),new RenderSGNode(makeSphere(0.1,10,10))));
+  dalek.append(new TransformationSGNode(glm.translate(0.33,-0.5,0.2),new RenderSGNode(makeSphere(0.1,10,10))));
+  dalek.append(new TransformationSGNode(glm.translate(0.67,-0.5,0.2),new RenderSGNode(makeSphere(0.1,10,10))));
+  dalek.append(new TransformationSGNode(glm.translate(0.33,-0.2,0.1),new RenderSGNode(makeSphere(0.1,10,10))));
+  dalek.append(new TransformationSGNode(glm.translate(0.67,-0.2,0.1),new RenderSGNode(makeSphere(0.1,10,10))));
+  dalek.append(new TransformationSGNode(glm.translate(0.33,-0.5,0.95),new RenderSGNode(makeSphere(0.1,10,10))));
+  dalek.append(new TransformationSGNode(glm.translate(0.67,-0.5,0.95),new RenderSGNode(makeSphere(0.1,10,10))));
+  dalek.append(new TransformationSGNode(glm.translate(0.33,-0.2,1.3),new RenderSGNode(makeSphere(0.1,10,10))));
+  dalek.append(new TransformationSGNode(glm.translate(0.67,-0.2,1.3),new RenderSGNode(makeSphere(0.1,10,10))));
+
+  dalek.append(new TransformationSGNode(glm.translate(0.33,-0.8,0.8),new RenderSGNode(makeZylinder(0.02,0.5,10))));
+  dalek.append(new TransformationSGNode(glm.translate(0.33,-0.8,0.8),new RenderSGNode(makeSphere(0.04,10,10))));
+  dalek.append(new TransformationSGNode(glm.translate(0.67,-0.8,0.8),new RenderSGNode(makeZylinder(0.02,0.4,10))));
+  dalek.append(new TransformationSGNode(glm.translate(0.67,-0.8,0.8),new RenderSGNode(makeSphere(0.04,10,10))));
+  dalek.append(new TransformationSGNode(glm.translate(0.67,-0.8,1.245),new TransformationSGNode(glm.rotateX(180),new RenderSGNode(makeHalfSphere(0.05,10,10)))));
+  dalek.append(new TransformationSGNode(glm.translate(0.5,-1,0.75),new RenderSGNode(makeZylinder(0.025,0.2,10))));
+  dalek.append(new TransformationSGNode(glm.translate(0.5,-1,0.93),new RenderSGNode(makeSphere(0.04,10,10))));
+
+
+
+  return dalek;
+}
+
+function makeTrapeze(length, width, height, offset) {
+  width = width || 1;
+  height = height || 1;
+  length = length || 1;
+  offset = offset || 0;
+  var position = [0, 0, 0, length, 0, 0, width+offset, height, 0, offset, height, 0];
+  var normal = [0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1];
+  var texture = [0, 0 /**/, 1, 0 /**/, 1, 1 /**/, 0, 1];
+  var index = [0, 1, 2, 2, 3, 0];
+  return {
+    position: position,
+    normal: normal,
+    texture: texture,
+    index: index
+  };
+}
+
+
+function makeZylinder(radius, length, latitudeBands) {
+ radius = radius || 2;
+ latitudeBands = latitudeBands || 30;
+ length = length || 5;
+ //based on view-source:http://learningwebgl.com/lessons/lesson11/index.html
+ var vertexPositionData = [];
+ var normalData = [];
+ var textureCoordData = [];
+ for (var latNumber = 0; latNumber <= latitudeBands; latNumber++) {
+   var theta = latNumber * 2* Math.PI / latitudeBands;
+   var sinTheta = Math.sin(theta);
+   var cosTheta = Math.cos(theta);
+
+   var x = sinTheta;
+   var y = cosTheta;
+
+   var v = 1 - (latNumber / latitudeBands);
+   normalData.push(x);
+   normalData.push(y);
+   normalData.push(0);
+   textureCoordData.push(0);
+   textureCoordData.push(v);
+   vertexPositionData.push(radius * x);
+   vertexPositionData.push(radius * y);
+   vertexPositionData.push(0);
+
+   normalData.push(x);
+   normalData.push(y);
+   normalData.push(length);
+   textureCoordData.push(length);
+   textureCoordData.push(v);
+   vertexPositionData.push(radius * x);
+   vertexPositionData.push(radius * y);
+   vertexPositionData.push(length);
+
+ }
+
+ var indexData = [];
+ for (var latNumber = 0; latNumber < latitudeBands; latNumber++) {
+
+     var first = (latNumber * 2);
+     indexData.push(first);
+     indexData.push(first+1);
+     indexData.push(first+2);
+     indexData.push(first+1);
+     indexData.push(first+3);
+     indexData.push(first+2);
+
+ }
+ return {
+   position: vertexPositionData,
+   normal: normalData,
+   texture: textureCoordData,
+   index: indexData //1
+ };
+}
+
+
+function makeHalfSphere(radius, latitudeBands, longitudeBands) {
+  radius = radius || 2;
+  latitudeBands = latitudeBands || 30;
+  longitudeBands = longitudeBands || 30;
+
+  //based on view-source:http://learningwebgl.com/lessons/lesson11/index.html
+  var vertexPositionData = [];
+  var normalData = [];
+  var textureCoordData = [];
+  for (var latNumber = 0; latNumber <= latitudeBands; latNumber++) {
+    var theta = latNumber * Math.PI / latitudeBands;
+    var sinTheta = Math.sin(theta);
+    var cosTheta = Math.cos(theta);
+    for (var longNumber = 0; longNumber <= longitudeBands; longNumber++) {
+      var phi = longNumber * Math.PI / longitudeBands;
+      var sinPhi = Math.sin(phi);
+      var cosPhi = Math.cos(phi);
+      var x = cosPhi * sinTheta;
+      var y = cosTheta;
+      var z = sinPhi * sinTheta;
+      var u = 1 - (longNumber / longitudeBands);
+      var v = 1 - (latNumber / latitudeBands);
+      normalData.push(x);
+      normalData.push(y);
+      normalData.push(z);
+      textureCoordData.push(u);
+      textureCoordData.push(v);
+      vertexPositionData.push(radius * x);
+      vertexPositionData.push(radius * y);
+      vertexPositionData.push(radius * z);
+    }
+  }
+  var indexData = [];
+  for (var latNumber = 0; latNumber < latitudeBands; latNumber++) {
+    for (var longNumber = 0; longNumber < longitudeBands; longNumber++) {
+      var first = (latNumber * (longitudeBands + 1)) + longNumber;
+      var second = first + longitudeBands + 1;
+      indexData.push(first);
+      indexData.push(second);
+      indexData.push(first + 1);
+      indexData.push(second);
+      indexData.push(second + 1);
+      indexData.push(first + 1);
+    }
+  }
+  return {
+    position: vertexPositionData,
+    normal: normalData,
+    texture: textureCoordData,
+    index: indexData //1
+  };
+}
+
+function makeQuad(width, height, length){
+  width = width || 2;
+  length = length || 3;
+  height = height || 1;
+
+  var position = [0,0,0,  width,0,0, width,0,height,  0,0,height,
+                  0,length,0,  width,length,0, width,length,height,  0,length,height];
+
+  var normal = [0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,1,0,0,1,0,0,1,0,0,1,0];
+  var texture = [0.5, 0.33, 0.5, 0.67,  0.75, 0.67,   0.75, 0.33];
+  var index = [0, 1, 2, 2, 3, 0,4,0,3,3,7,4,4,5,1,1,0,4,1,5,6,6,2,1,5,4,7,7,6,5,3,2,6,6,7,3];
+
+
+  return {
+    position: position,
+    normal: normal,
+    texture: texture,
+    index: index
+  };
 }
 
 function render(timeInMilliseconds) {
