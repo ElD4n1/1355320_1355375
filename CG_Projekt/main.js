@@ -45,8 +45,6 @@ var framebufferHeight = 1024;
 
 //load the required resources using a utility function
 loadResources({
-  vs_phong: 'shader/phong.vs.glsl',
-  fs_phong: 'shader/phong.fs.glsl',
   vs_shadow: 'shader/shadow.vs.glsl',
   fs_shadow: 'shader/shadow.fs.glsl',
   vs_env: 'shader/envmap.vs.glsl',
@@ -61,8 +59,8 @@ loadResources({
   env_pos_z: 'models/skybox/Galaxy_FT.jpg',
   env_neg_z: 'models/skybox/Galaxy_BK.jpg',
   //textures
-  moon_texture: 'models/Moon.jpg'
-
+  moon_texture: 'models/Moon.jpg',
+  planet_texture: 'models/planet.jpg'
 
   //model: 'models/C-3PO.obj'
 }).then(function (resources /*an object containing our keys with the loaded resources*/) {
@@ -90,7 +88,7 @@ function init(resources) {
 
 function createSceneGraph(gl, resources) {
   //create scenegraph
-  const root = new ShaderSGNode(createProgram(gl, resources.vs_phong, resources.fs_phong));
+  const root = new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_texture));
 
 
 
@@ -103,7 +101,7 @@ function createSceneGraph(gl, resources) {
 
   //light debug helper function
   function createLightSphere() {
-    return new ShaderSGNode(createProgram(gl, resources.vs_phong, resources.fs_phong), [
+    return new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_texture), [
 
       new RenderSGNode(makeSphere(1.9,10,10)) // Parameters: radius, latitudeBands, longitudeBands (how round it is)
     ]);
@@ -128,9 +126,10 @@ function createSceneGraph(gl, resources) {
 
   {
     //Planet
-    planetNode =  new MaterialSGNode([
+    planetNode =  new MaterialSGNode(
+                  new TextureSGNode(resources.planet_texture,
                   new RenderSGNode(makeSphere(10,30,30))
-                ]);
+                ));
 
     planetNode.ambient = [0.05375, 0.05, 0.06625, 1];
     planetNode.diffuse = [ 0.18275, 0.17, 0.22525, 1];
@@ -140,6 +139,7 @@ function createSceneGraph(gl, resources) {
     root.append(planetNode);
   }
 
+<<<<<<< HEAD
   let dalek = createDalek();
   let translateDalek = new TransformationSGNode(glm.translate(0,-13,0));
   translateDalek.append(dalek);
@@ -149,6 +149,10 @@ function createSceneGraph(gl, resources) {
                     new AdvancedTextureSGNode(resources.moon_texture,
                       new RenderSGNode(makeSphere(3,10,10)))]
                 );
+=======
+    let moonNode =   new TextureSGNode(resources.moon_texture,
+                      new RenderSGNode(makeSphere(3,20,20)));
+>>>>>>> origin/master
 
     orbitMoon = new TransformationSGNode(mat4.create());
 
@@ -449,6 +453,20 @@ class EnvironmentSGNode extends SGNode {
     gl.activeTexture(gl.TEXTURE0 + this.textureunit);
     gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
   }
+}
+
+// extend the library TextureSGNode to enable texturing in shader before rendering and disable it afterwards
+class TextureSGNode extends AdvancedTextureSGNode {
+    constructor(image, children) {
+      super(image, children);
+    }
+    render(context) {
+        gl.uniform1i(gl.getUniformLocation(context.shader, 'u_enableTexturing'), 1);
+
+        super.render(context);
+
+        gl.uniform1i(gl.getUniformLocation(context.shader, 'u_enableTexturing'), 0);
+    }
 }
 
 //camera control
