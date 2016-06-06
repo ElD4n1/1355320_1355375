@@ -10,9 +10,9 @@ const camera = {
     y: 0
   },
   position: {
-    x: 0,
-    y: -1,
-    z: 4
+    x: 5,
+    y: -8,
+    z:-10
   },
   direction: {
     x: 0,
@@ -30,8 +30,10 @@ const camera = {
 var root = null;
 var lightNode;
 var translateLight;
+var orbitSun;
 var planetNode;
 var translatePlanet;
+var orbitMoon;
 
 //textures
 var envcubetexture;
@@ -87,11 +89,13 @@ function init(resources) {
 
 function createSceneGraph(gl, resources) {
   //create scenegraph
-  const root = new ShaderSGNode(createProgram(gl, resources.vs_env, resources.fs_env));
+  const root = new ShaderSGNode(createProgram(gl, resources.vs_phong, resources.fs_phong));
 
   //add skybox by putting large sphere around us
-  var skybox = new EnvironmentSGNode(envcubetexture,4,false,
-                  new RenderSGNode(makeSphere(50)));
+  var skybox =  new ShaderSGNode(createProgram(gl, resources.vs_env, resources.fs_env),[
+                new EnvironmentSGNode(envcubetexture,4,false,
+                  new RenderSGNode(makeSphere(50)))
+                ]);
   root.append(skybox);
 
   //light debug helper function
@@ -110,20 +114,45 @@ function createSceneGraph(gl, resources) {
     lightNode.specular = [1, 1, 1, 1];
     lightNode.position = [0, 0, 0];
 
-    translateLight = new TransformationSGNode(glm.translate(5,-5,20)); //translating the light is the same as setting the light position
+    orbitSun = new TransformationSGNode(mat4.create());
+    translateLight = new TransformationSGNode(glm.translate(5,-5,30)); //translating the light is the same as setting the light position
 
+    orbitSun.append(translateLight);
     translateLight.append(lightNode);
     translateLight.append(createLightSphere()); //add sphere for debugging: since we use 0,0,0 as our light position the sphere is at the same position as the light source
-    root.append(translateLight);
+    root.append(orbitSun);
   }
 
   {
     //Planet
-    planetNode = new RenderSGNode(makeSphere(2,30,30));
+    planetNode =  new MaterialSGNode([
+                  new RenderSGNode(makeSphere(10,30,30))
+                ]);
     translatePlanet = new TransformationSGNode(glm.translate(-3,2,15));
     translatePlanet.append(planetNode);
 
+
+    planetNode.ambient = [0.05375, 0.05, 0.06625, 1];
+    planetNode.diffuse = [ 0.18275, 0.17, 0.22525, 1];
+    planetNode.specular = [ 0.332741, 0.328634, 0.346435, 1];
+    planetNode.shininess = 0.9;
+
     root.append(translatePlanet);
+
+    let moonNode = new MaterialSGNode([
+                  new RenderSGNode(makeSphere(3,10,10))
+                ]);
+
+    moonNode.ambient = [0.135, 0.2225,  0.1575, 1];
+    moonNode.diffuse = [ 0.54,  0.89, 0.63, 1];
+    moonNode.specular = [ 0.316228, 0.316228, 0.316228, 1];
+    moonNode.shininess = 0.7;
+    orbitMoon = new TransformationSGNode(mat4.create());
+
+    let translateMoon = new TransformationSGNode(glm.translate(15,-5,0));
+    translateMoon.append(moonNode);
+    orbitMoon.append(translateMoon)
+    translatePlanet.append(orbitMoon);
 
   }
 
@@ -133,6 +162,9 @@ function createSceneGraph(gl, resources) {
 function render(timeInMilliseconds) {
   checkForWindowResize(gl);
 
+  //Rotates sun and moon around the planet
+  orbitSun.matrix = glm.rotateY(timeInMilliseconds*0.005);
+  orbitMoon.matrix = glm.rotateY(timeInMilliseconds*-0.001);
   //setup viewport
   gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
   gl.clearColor(0.0, 0.0, 0.0, 1.0); // Backgroundcolor
