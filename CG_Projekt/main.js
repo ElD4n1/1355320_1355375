@@ -7,8 +7,8 @@ const camera = {
     y: 0
   },
   position: {
-    x: 5,
-    y: -8,
+    x: 25,
+    y: -15,
     z:-10
   },
   direction: {
@@ -90,6 +90,8 @@ function createSceneGraph(gl, resources) {
   //create scenegraph
   const root = new ShaderSGNode(createProgram(gl, resources.vs_phong, resources.fs_phong));
 
+
+
   //add skybox by putting large sphere around us
   var skybox =  new ShaderSGNode(createProgram(gl, resources.vs_env, resources.fs_env),[
                 new EnvironmentSGNode(envcubetexture,4,false,
@@ -101,7 +103,7 @@ function createSceneGraph(gl, resources) {
   function createLightSphere() {
     return new ShaderSGNode(createProgram(gl, resources.vs_phong, resources.fs_phong), [
 
-      new RenderSGNode(makeSphere(.9,10,10)) // Parameters: radius, latitudeBands, longitudeBands (how round it is)
+      new RenderSGNode(makeSphere(1.9,10,10)) // Parameters: radius, latitudeBands, longitudeBands (how round it is)
     ]);
   }
 
@@ -114,7 +116,7 @@ function createSceneGraph(gl, resources) {
     lightNode.position = [0, 0, 0];
 
     orbitSun = new TransformationSGNode(mat4.create());
-    translateLight = new TransformationSGNode(glm.translate(5,-5,30)); //translating the light is the same as setting the light position
+    translateLight = new TransformationSGNode(glm.translate(-40,-5,20)); //translating the light is the same as setting the light position
 
     orbitSun.append(translateLight);
     translateLight.append(lightNode);
@@ -127,29 +129,35 @@ function createSceneGraph(gl, resources) {
     planetNode =  new MaterialSGNode([
                   new RenderSGNode(makeSphere(10,30,30))
                 ]);
-    translatePlanet = new TransformationSGNode(glm.translate(-3,2,15));
-    translatePlanet.append(planetNode);
-
 
     planetNode.ambient = [0.05375, 0.05, 0.06625, 1];
     planetNode.diffuse = [ 0.18275, 0.17, 0.22525, 1];
     planetNode.specular = [ 0.332741, 0.328634, 0.346435, 1];
     planetNode.shininess = 0.9;
 
-    root.append(translatePlanet);
+    root.append(planetNode);
+  }
 
-    let moonNode = new AdvancedTextureSGNode(resources.moonTexture,
-                  new RenderSGNode(makeSphere(3,10,10))
-                );
+
+    let moonNode =
+                  new RenderSGNode(makeSphere(3,10,10)                );
 
     orbitMoon = new TransformationSGNode(mat4.create());
 
-    let translateMoon = new TransformationSGNode(glm.translate(15,-5,0));
-    translateMoon.append(moonNode);
-    orbitMoon.append(translateMoon)
-    translatePlanet.append(orbitMoon);
+    let moonLightNode = new LightSGNode(); //use now framework implementation of light node
+    moonLightNode.ambient = [0.2, 0.2, 0.2, 1];
+    moonLightNode.diffuse = [0.8, 0.8, 0.8, 1];
+    moonLightNode.specular = [0.5, 0.5, 0.5, 1];
+    moonLightNode.position = [0, 0, 0];
+    moonLightNode.uniform = 'u_light2';
 
-  }
+    let translateMoon = new TransformationSGNode(glm.translate(15,-5,-15));
+    translateMoon.append(moonNode);
+    translateMoon.append(moonLightNode);
+    orbitMoon.append(translateMoon)
+    planetNode.append(orbitMoon);
+
+
 
   return root;
 }
@@ -210,6 +218,7 @@ function initCubeMap(resources) {
   //unbind the texture again
   gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
 }
+
 
 //a scene graph node for setting environment mapping parameters
 class EnvironmentSGNode extends SGNode {
