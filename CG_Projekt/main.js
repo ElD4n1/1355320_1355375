@@ -59,8 +59,8 @@ loadResources({
   env_pos_z: 'models/skybox/Galaxy_FT.jpg',
   env_neg_z: 'models/skybox/Galaxy_BK.jpg',
   //textures
-  moon_texture: 'models/Moon.jpg'
-
+  moon_texture: 'models/Moon.jpg',
+  planet_texture: 'models/planet.jpg'
 
   //model: 'models/C-3PO.obj'
 }).then(function (resources /*an object containing our keys with the loaded resources*/) {
@@ -126,9 +126,10 @@ function createSceneGraph(gl, resources) {
 
   {
     //Planet
-    planetNode =  new MaterialSGNode([
+    planetNode =  new MaterialSGNode(
+                  new TextureSGNode(resources.planet_texture,
                   new RenderSGNode(makeSphere(10,30,30))
-                ]);
+                ));
 
     planetNode.ambient = [0.05375, 0.05, 0.06625, 1];
     planetNode.diffuse = [ 0.18275, 0.17, 0.22525, 1];
