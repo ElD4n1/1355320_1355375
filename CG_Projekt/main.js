@@ -139,7 +139,6 @@ function createSceneGraph(gl, resources) {
     root.append(planetNode);
   }
 
-<<<<<<< HEAD
   let dalek = createDalek();
   let translateDalek = new TransformationSGNode(glm.translate(0,-13,0));
   translateDalek.append(dalek);
@@ -149,10 +148,7 @@ function createSceneGraph(gl, resources) {
                     new AdvancedTextureSGNode(resources.moon_texture,
                       new RenderSGNode(makeSphere(3,10,10)))]
                 );
-=======
-    let moonNode =   new TextureSGNode(resources.moon_texture,
-                      new RenderSGNode(makeSphere(3,20,20)));
->>>>>>> origin/master
+
 
     orbitMoon = new TransformationSGNode(mat4.create());
 
@@ -176,13 +172,23 @@ function createSceneGraph(gl, resources) {
 
 // Returns a Dalek node
 function createDalek(){
-  let dalek = new RenderSGNode(makeQuad(1,1.5,0.2));
+  let dalek = new RenderSGNode(makeTrapeze(1,1,0.2,0));
+  dalek.append(new TransformationSGNode(glm.translate(0, 0,1.5), new RenderSGNode(makeTrapeze(1,1,0.2,0))));
+  dalek.append(new TransformationSGNode(glm.translate(0, 0,1.5), new TransformationSGNode(glm.rotateY(90), new RenderSGNode(makeTrapeze(1.5,1.5,0.2,0)))));
+  dalek.append(new TransformationSGNode(glm.translate(1, 0,1.5), new TransformationSGNode(glm.rotateY(90), new RenderSGNode(makeTrapeze(1.5,1.5,0.2,0)))));
+  dalek.append(new TransformationSGNode(glm.translate(0, 0.2,0), new TransformationSGNode(glm.rotateX(90), new RenderSGNode(makeTrapeze(1,1,1.5,0)))));
+
+  dalek.append(new TransformationSGNode(glm.translate(0.2, -0.9,0.2), new RenderSGNode(makeTrapeze(0.6,0.6,0.25,0))));
+  dalek.append(new TransformationSGNode(glm.translate(0.2, -0.9,0.8), new RenderSGNode(makeTrapeze(0.6,0.6,0.25,0))));
+  dalek.append(new TransformationSGNode(glm.translate(0.2, -0.9,0.8), new TransformationSGNode(glm.rotateY(90), new RenderSGNode(makeTrapeze(0.6,0.6,0.25,0)))));
+  dalek.append(new TransformationSGNode(glm.translate(0.8, -0.9,0.8), new TransformationSGNode(glm.rotateY(90), new RenderSGNode(makeTrapeze(0.6,0.6,0.25,0)))));
+  dalek.append(new TransformationSGNode(glm.translate(0.2, -0.9,0.2), new TransformationSGNode(glm.rotateX(90), new RenderSGNode(makeTrapeze(0.6,0.6,0.6,0)))));
+
   dalek.append(new TransformationSGNode(glm.rotateY(270),new TransformationSGNode(glm.rotateX(197),new RenderSGNode(makeTrapeze(1.5,0.6,0.7,0.2)))));
   dalek.append(new TransformationSGNode(glm.translate(1,0,0),new TransformationSGNode(glm.rotateY(270),new TransformationSGNode(glm.rotateX(163),new RenderSGNode(makeTrapeze(1.5,0.6,0.7,0.2))))));
   dalek.append(new TransformationSGNode(glm.rotateX(163),new RenderSGNode(makeTrapeze(1,0.6,0.7,0.2))));
   dalek.append(new TransformationSGNode(glm.translate(0,0,1.5),new TransformationSGNode(glm.rotateX(226.5),new RenderSGNode(makeTrapeze(1,0.6,1,0.2)))));
-  dalek.append(new TransformationSGNode(glm.translate(0.2,-0.9,0.2),new RenderSGNode(makeQuad(0.6,0.6,0.3))));
-  dalek.append(new TransformationSGNode(glm.translate(0.5,-0.9,0.5),new RenderSGNode(makeSphere(0.3,15,15))));
+dalek.append(new TransformationSGNode(glm.translate(0.5,-0.9,0.5),new RenderSGNode(makeSphere(0.3,15,15))));
 //Spheres on body
   dalek.append(new TransformationSGNode(glm.translate(0.2,-0.5,0.3),new RenderSGNode(makeSphere(0.1,10,10))));
   dalek.append(new TransformationSGNode(glm.translate(0.2,-0.5,0.6),new RenderSGNode(makeSphere(0.1,10,10))));
