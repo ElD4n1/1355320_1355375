@@ -60,7 +60,9 @@ loadResources({
   env_pos_y: 'models/skybox/Galaxy_DN.jpg',
   env_neg_y: 'models/skybox/Galaxy_UP.jpg',
   env_pos_z: 'models/skybox/Galaxy_FT.jpg',
-  env_neg_z: 'models/skybox/Galaxy_BK.jpg'
+  env_neg_z: 'models/skybox/Galaxy_BK.jpg',
+  //textures
+  moonTexture: 'models/Moon.jpg'
 
 
   //model: 'models/C-3PO.obj'
@@ -139,14 +141,10 @@ function createSceneGraph(gl, resources) {
 
     root.append(translatePlanet);
 
-    let moonNode = new MaterialSGNode([
+    let moonNode = new AdvancedTextureSGNode(resources.moonTexture,
                   new RenderSGNode(makeSphere(3,10,10))
-                ]);
+                );
 
-    moonNode.ambient = [0.135, 0.2225,  0.1575, 1];
-    moonNode.diffuse = [ 0.54,  0.89, 0.63, 1];
-    moonNode.specular = [ 0.316228, 0.316228, 0.316228, 1];
-    moonNode.shininess = 0.7;
     orbitMoon = new TransformationSGNode(mat4.create());
 
     let translateMoon = new TransformationSGNode(glm.translate(15,-5,0));
