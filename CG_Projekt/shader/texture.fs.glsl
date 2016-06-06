@@ -26,17 +26,16 @@ struct Light {
 //illumination related variables
 uniform Material u_material;
 uniform Light u_light;
+uniform Light u_light2;
 varying vec3 v_normalVec;
 varying vec3 v_eyeVec;
 varying vec3 v_lightVec;
+varying vec3 v_light2Vec;
 
-//texture related variables
-uniform bool u_enableObjectTexture;
-//TASK 1: define texture sampler and texture coordinates
+// texturing variables
+uniform bool u_enableTexturing;
 varying vec2 v_texCoord;
 uniform sampler2D u_tex;
-//EXTRA TASK: define uniform for time variable
-uniform float u_wobbleTime;
 
 vec4 calculateSimplePointLight(Light light, Material material, vec3 lightVec, vec3 normalVec, vec3 eyeVec, vec4 textureColor) {
 	lightVec = normalize(lightVec);
@@ -50,8 +49,10 @@ vec4 calculateSimplePointLight(Light light, Material material, vec3 lightVec, ve
 	vec3 reflectVec = reflect(-lightVec,normalVec);
 	float spec = pow( max( dot(reflectVec, eyeVec), 0.0) , material.shininess);
 
-  material.diffuse = textureColor;
-  material.ambient = textureColor;
+  if(u_enableTexturing) {
+    material.diffuse = textureColor;
+    material.ambient = textureColor;
+  }
 
 	vec4 c_amb  = clamp(light.ambient * material.ambient, 0.0, 1.0);
 	vec4 c_diff = clamp(diffuse * light.diffuse * material.diffuse, 0.0, 1.0);
@@ -63,8 +64,13 @@ vec4 calculateSimplePointLight(Light light, Material material, vec3 lightVec, ve
 
 void main (void) {
 
-  vec4 textureColor = texture2D(u_tex,v_texCoord);
+  vec4 textureColor = vec4(0,0,0,1);
 
-	gl_FragColor = calculateSimplePointLight(u_light, u_material, v_lightVec, v_normalVec, v_eyeVec, textureColor);
+  if(u_enableTexturing) {
+    textureColor = texture2D(u_tex,v_texCoord);
+  }
+
+	gl_FragColor = calculateSimplePointLight(u_light, u_material, v_lightVec, v_normalVec, v_eyeVec, textureColor) +
+                calculateSimplePointLight(u_light2, u_material, v_light2Vec, v_normalVec, v_eyeVec, textureColor);
 
 }

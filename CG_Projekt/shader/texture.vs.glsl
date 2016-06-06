@@ -10,13 +10,15 @@ uniform mat4 u_projection;
 uniform mat4 u_invView;
 
 uniform vec3 u_lightPos;
+uniform vec3 u_light2Pos;
 
 //output of this shader
 varying vec3 v_normalVec;
 varying vec3 v_eyeVec;
 varying vec3 v_lightVec;
+varying vec3 v_light2Vec;
 
-//TASK 1: define output variable for texture coordinates
+//output variable for texture coordinates
 varying vec2 v_texCoord;
 
 void main() {
@@ -26,8 +28,9 @@ void main() {
 
   v_eyeVec = -eyePosition.xyz;
 	v_lightVec = u_lightPos - eyePosition.xyz;
+	v_light2Vec = u_light2Pos - eyePosition.xyz;
 
-	//TASK 1: pass on texture coordinates to fragment shader
+	//pass on texture coordinates to fragment shader
 	v_texCoord = a_texCoord;
 
 	gl_Position = u_projection * eyePosition;

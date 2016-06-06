@@ -45,8 +45,6 @@ var framebufferHeight = 1024;
 
 //load the required resources using a utility function
 loadResources({
-  vs_phong: 'shader/phong.vs.glsl',
-  fs_phong: 'shader/phong.fs.glsl',
   vs_shadow: 'shader/shadow.vs.glsl',
   fs_shadow: 'shader/shadow.fs.glsl',
   vs_env: 'shader/envmap.vs.glsl',
@@ -90,7 +88,7 @@ function init(resources) {
 
 function createSceneGraph(gl, resources) {
   //create scenegraph
-  const root = new ShaderSGNode(createProgram(gl, resources.vs_phong, resources.fs_phong));
+  const root = new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_texture));
 
 
 
@@ -103,7 +101,7 @@ function createSceneGraph(gl, resources) {
 
   //light debug helper function
   function createLightSphere() {
-    return new ShaderSGNode(createProgram(gl, resources.vs_phong, resources.fs_phong), [
+    return new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_texture), [
 
       new RenderSGNode(makeSphere(1.9,10,10)) // Parameters: radius, latitudeBands, longitudeBands (how round it is)
     ]);
@@ -140,10 +138,8 @@ function createSceneGraph(gl, resources) {
     root.append(planetNode);
   }
 
-    let moonNode = new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_texture), [
-                    new AdvancedTextureSGNode(resources.moon_texture,
-                      new RenderSGNode(makeSphere(3,10,10)))]
-                );
+    let moonNode =   new TextureSGNode(resources.moon_texture,
+                      new RenderSGNode(makeSphere(3,20,20)));
 
     orbitMoon = new TransformationSGNode(mat4.create());
 
@@ -252,6 +248,20 @@ class EnvironmentSGNode extends SGNode {
     gl.activeTexture(gl.TEXTURE0 + this.textureunit);
     gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
   }
+}
+
+// extend the library TextureSGNode to enable texturing in shader before rendering and disable it afterwards
+class TextureSGNode extends AdvancedTextureSGNode {
+    constructor(image, children) {
+      super(image, children);
+    }
+    render(context) {
+        gl.uniform1i(gl.getUniformLocation(context.shader, 'u_enableTexturing'), 1);
+
+        super.render(context);
+
+        gl.uniform1i(gl.getUniformLocation(context.shader, 'u_enableTexturing'), 0);
+    }
 }
 
 //camera control
