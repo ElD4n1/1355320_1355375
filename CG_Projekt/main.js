@@ -51,6 +51,8 @@ loadResources({
   fs_shadow: 'shader/shadow.fs.glsl',
   vs_env: 'shader/envmap.vs.glsl',
   fs_env: 'shader/envmap.fs.glsl',
+  vs_texture: 'shader/texture.vs.glsl',
+  fs_texture: 'shader/texture.fs.glsl',
 // Cubemap:
   env_pos_x: 'models/skybox/Galaxy_RT.jpg',
   env_neg_x: 'models/skybox/Galaxy_LT.jpg',
@@ -59,7 +61,7 @@ loadResources({
   env_pos_z: 'models/skybox/Galaxy_FT.jpg',
   env_neg_z: 'models/skybox/Galaxy_BK.jpg',
   //textures
-  moonTexture: 'models/Moon.jpg'
+  moon_texture: 'models/Moon.jpg'
 
 
   //model: 'models/C-3PO.obj'
@@ -138,8 +140,9 @@ function createSceneGraph(gl, resources) {
 
     root.append(translatePlanet);
 
-    let moonNode = new AdvancedTextureSGNode(resources.moonTexture,
-                  new RenderSGNode(makeSphere(3,10,10))
+    let moonNode = new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_texture), [
+                    new AdvancedTextureSGNode(resources.moon_texture,
+                      new RenderSGNode(makeSphere(3,10,10)))]
                 );
 
     orbitMoon = new TransformationSGNode(mat4.create());
