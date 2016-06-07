@@ -144,10 +144,8 @@ function createSceneGraph(gl, resources) {
   translateDalek.append(dalek);
   planetNode.append(translateDalek);
 
-    let moonNode = new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_texture), [
-                    new AdvancedTextureSGNode(resources.moon_texture,
-                      new RenderSGNode(makeSphere(3,10,10)))]
-                );
+    let moonNode = new TextureSGNode(resources.moon_texture,
+                      new RenderSGNode(makeSphere(3,10,10)));
 
 
     orbitMoon = new TransformationSGNode(mat4.create());
