@@ -31,6 +31,8 @@ var orbitSun;
 var planetNode;
 var translatePlanet;
 var orbitMoon;
+var translateTardis;
+var rotateTardis;
 
 //textures
 var envcubetexture;
@@ -60,7 +62,11 @@ loadResources({
   env_neg_z: 'models/skybox/Galaxy_BK.jpg',
   //textures
   moon_texture: 'models/Moon.jpg',
-  planet_texture: 'models/planet.jpg'
+  planet_texture: 'models/planet.jpg',
+  tardis_bottom: 'models/Tardis/TARDIS_BOTTOM.jpg',
+  tardis_top: 'models/Tardis/TARDIS_TOP.jpg',
+  tardis_front: 'models/Tardis/TARDIS_FRONT.jpg',
+  tardis_side: 'models/Tardis/TARDIS_SIDE.jpg'
 
   //model: 'models/C-3PO.obj'
 }).then(function (resources /*an object containing our keys with the loaded resources*/) {
@@ -143,6 +149,25 @@ function createSceneGraph(gl, resources) {
   let translateDalek = new TransformationSGNode(glm.translate(0,-13,0));
   translateDalek.append(dalek);
   planetNode.append(translateDalek);
+
+{
+  //tardis
+  let tardis = new MaterialSGNode(
+            new TextureSGNode(resources.tardis_bottom,
+            new RenderSGNode(makeRect(0.5,0.5))
+  ));
+  tardis.append(new TransformationSGNode(glm.translate(-0.5,-0.5,0),new TransformationSGNode(glm.rotateX(90), new TextureSGNode(resources.tardis_front, new RenderSGNode(makeTrapeze(1,1,2,0))))));
+  tardis.append(new TransformationSGNode(glm.translate(-0.5,0.5,0),new TransformationSGNode(glm.rotateZ(270),new TransformationSGNode(glm.rotateX(90), new TextureSGNode(resources.tardis_side, new RenderSGNode(makeTrapeze(1,1,2,0)))))));
+  tardis.append(new TransformationSGNode(glm.translate(0.5,-0.5,0),new TransformationSGNode(glm.rotateZ(90),new TransformationSGNode(glm.rotateX(90), new TextureSGNode(resources.tardis_side, new RenderSGNode(makeTrapeze(1,1,2,0)))))));
+  tardis.append(new TransformationSGNode(glm.translate(0.5,0.5,0),new TransformationSGNode(glm.rotateZ(180),new TransformationSGNode(glm.rotateX(90), new TextureSGNode(resources.tardis_side, new RenderSGNode(makeTrapeze(1,1,2,0)))))));
+  tardis.append(new TransformationSGNode(glm.translate(0,0,2), new TextureSGNode(resources.tardis_top, new RenderSGNode(makeRect(0.5,0.5)))));
+  rotateTardis = new TransformationSGNode(mat4.create(), new TransformationSGNode(glm.rotateX(90),tardis));
+  translateTardis =new TransformationSGNode(glm.translate(2,-13,0),rotateTardis);
+
+tardis.shininess = 0;
+
+  planetNode.append(translateTardis);
+}
 
     let moonNode = new TextureSGNode(resources.moon_texture,
                       new RenderSGNode(makeSphere(3,10,10)));
@@ -376,6 +401,7 @@ function render(timeInMilliseconds) {
   //Rotates sun and moon around the planet
   orbitSun.matrix = glm.rotateY(timeInMilliseconds*0.005);
   orbitMoon.matrix = glm.rotateY(timeInMilliseconds*-0.001);
+  rotateTardis.matrix = glm.rotateY(timeInMilliseconds*0.1);
   //setup viewport
   gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
   gl.clearColor(0.0, 0.0, 0.0, 1.0); // Backgroundcolor
