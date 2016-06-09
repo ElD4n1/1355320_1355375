@@ -116,7 +116,7 @@ function createSceneGraph(gl, resources) {
   {
     //initialize light
     lightNode = new LightSGNode(); //use now framework implementation of light node
-    lightNode.ambient = [0.2, 0.2, 0.2, 1];
+    lightNode.ambient = [0.0, 0.0, 0.0, 1];
     lightNode.diffuse = [0.8, 0.8, 0.8, 1];
     lightNode.specular = [1, 1, 1, 1];
     lightNode.position = [0, 0, 0];
@@ -150,6 +150,10 @@ function createSceneGraph(gl, resources) {
   translateDalek.append(dalek);
   planetNode.append(translateDalek);
 
+  planetNode.append(new TransformationSGNode(glm.translate(5,-13,0),createDalek()));
+
+  planetNode.append(new TransformationSGNode(glm.translate(0,-15,2), new TransformationSGNode(glm.rotateX(90),createLamp())));
+
 {
   //tardis
   let tardis = new MaterialSGNode(
@@ -162,7 +166,7 @@ function createSceneGraph(gl, resources) {
   tardis.append(new TransformationSGNode(glm.translate(0.5,0.5,0),new TransformationSGNode(glm.rotateZ(180),new TransformationSGNode(glm.rotateX(90), new TextureSGNode(resources.tardis_side, new RenderSGNode(makeTrapeze(1,1,2,0)))))));
   tardis.append(new TransformationSGNode(glm.translate(0,0,2), new TextureSGNode(resources.tardis_top, new RenderSGNode(makeRect(0.5,0.5)))));
   rotateTardis = new TransformationSGNode(mat4.create(), new TransformationSGNode(glm.rotateX(90),tardis));
-  translateTardis =new TransformationSGNode(glm.translate(2,-13,0),rotateTardis);
+  translateTardis =new TransformationSGNode(glm.translate(3,-13,5),rotateTardis);
 
 tardis.shininess = 0;
 
@@ -176,15 +180,15 @@ tardis.shininess = 0;
     orbitMoon = new TransformationSGNode(mat4.create());
 
     let moonLightNode = new LightSGNode(); //use now framework implementation of light node
-    moonLightNode.ambient = [0.2, 0.2, 0.2, 1];
-    moonLightNode.diffuse = [0.8, 0.8, 0.8, 1];
-    moonLightNode.specular = [0.5, 0.5, 0.5, 1];
+    moonLightNode.ambient = [0.0, 0.0, 0.0, 1];
+    moonLightNode.diffuse = [0.4, 0.4, 0.4, 1];
+    moonLightNode.specular = [0.2, 0.2, 0.2, 1];
     moonLightNode.position = [0, 0, 0];
     moonLightNode.uniform = 'u_light2';
 
     let translateMoon = new TransformationSGNode(glm.translate(15,-5,-15));
     translateMoon.append(moonNode);
-    translateMoon.append(moonLightNode);
+//    translateMoon.append(moonLightNode);
     orbitMoon.append(translateMoon)
     planetNode.append(orbitMoon);
 
@@ -193,11 +197,27 @@ tardis.shininess = 0;
   return root;
 }
 
+function createLamp(){
+  let lamp = new RenderSGNode(makeHalfSphere(0.3, 10, 10));
+  lamp.append(new TransformationSGNode(glm.rotateY(-45), new TransformationSGNode(glm.translate(0,0,0.29), new RenderSGNode(makeZylinder(0.05, 0.5,10)))));
+  lamp.append( new TransformationSGNode(glm.translate(-0.6,0,0.6), new RenderSGNode(makeSphere(0.08, 10,10))));
+  lamp.append(new TransformationSGNode(glm.translate(-0.6,0,-2.44), new RenderSGNode(makeZylinder(0.05,3,10))));
+
+  lamp = new MaterialSGNode(lamp);
+
+  lamp.ambient = [0.05375, 0.05, 0.06625, 1];
+  lamp.diffuse = [ 0.18275, 0.17, 0.22525, 1];
+  lamp.specular = [ 0.332741, 0.328634, 0.346435, 1];
+  lamp.shininess = 0.9;
+
+  return lamp;
+}
+
 // Returns a Dalek node
 function createDalek(){
   let dalek = new RenderSGNode(makeTrapeze(1,1,0.2,0));
   dalek.append(new TransformationSGNode(glm.translate(0, 0,1.2), new RenderSGNode(makeTrapeze(1,1,0.2,0))));
-  dalek.append(new TransformationSGNode(glm.translate(0, 0,1.2), new TransformationSGNode(glm.rotateY(90), new RenderSGNode(makeTrapeze(1.2,1.2,0.2,0)))));
+  dalek.append(new TransformationSGNode(glm.rotateY(270), new RenderSGNode(makeTrapeze(1.2,1.2,0.2,0))));
   dalek.append(new TransformationSGNode(glm.translate(1, 0,1.2), new TransformationSGNode(glm.rotateY(90), new RenderSGNode(makeTrapeze(1.2,1.2,0.2,0)))));
   dalek.append(new TransformationSGNode(glm.translate(0, 0.2,0), new TransformationSGNode(glm.rotateX(90), new RenderSGNode(makeTrapeze(1,1,1.2,0)))));
 
@@ -207,11 +227,11 @@ function createDalek(){
   dalek.append(new TransformationSGNode(glm.translate(0.8, -0.9,0.8), new TransformationSGNode(glm.rotateY(90), new RenderSGNode(makeTrapeze(0.6,0.6,0.25,0)))));
   dalek.append(new TransformationSGNode(glm.translate(0.2, -0.9,0.2), new TransformationSGNode(glm.rotateX(90), new RenderSGNode(makeTrapeze(0.6,0.6,0.6,0)))));
 
-  dalek.append(new TransformationSGNode(glm.rotateY(270),new TransformationSGNode(glm.rotateX(197),new RenderSGNode(makeTrapeze(1.2,0.6,0.7,0.2)))));
+  dalek.append(new TransformationSGNode(glm.translate(0,0,1.2), new TransformationSGNode(glm.rotateY(90),new TransformationSGNode(glm.rotateX(163), new RenderSGNode(makeTrapeze(1.2,0.6,0.7,0.4))))));
   dalek.append(new TransformationSGNode(glm.translate(1,0,0),new TransformationSGNode(glm.rotateY(270),new TransformationSGNode(glm.rotateX(163),new RenderSGNode(makeTrapeze(1.2,0.6,0.7,0.2))))));
   dalek.append(new TransformationSGNode(glm.rotateX(163),new RenderSGNode(makeTrapeze(1,0.6,0.7,0.2))));
   dalek.append(new TransformationSGNode(glm.translate(0,0,1.2),new TransformationSGNode(glm.rotateX(211),new RenderSGNode(makeTrapeze(1,0.6,0.8,0.2)))));
-dalek.append(new TransformationSGNode(glm.translate(0.5,-0.9,0.5),new RenderSGNode(makeSphere(0.3,15,15))));
+  dalek.append(new TransformationSGNode(glm.translate(0.5,-0.9,0.5),new RenderSGNode(makeSphere(0.3,15,15))));
 //Spheres on body
   dalek.append(new TransformationSGNode(glm.translate(0.2,-0.5,0.3),new RenderSGNode(makeSphere(0.1,10,10))));
   dalek.append(new TransformationSGNode(glm.translate(0.2,-0.5,0.6),new RenderSGNode(makeSphere(0.1,10,10))));
@@ -240,7 +260,12 @@ dalek.append(new TransformationSGNode(glm.translate(0.5,-0.9,0.5),new RenderSGNo
   dalek.append(new TransformationSGNode(glm.translate(0.5,-1,0.75),new RenderSGNode(makeZylinder(0.025,0.2,10))));
   dalek.append(new TransformationSGNode(glm.translate(0.5,-1,0.93),new RenderSGNode(makeSphere(0.04,10,10))));
 
+  dalek = new MaterialSGNode(dalek);
 
+  dalek.ambient = [0.24725, 0.1995, 0.0745, 1];
+  dalek.diffuse = [0.75164, 0.60648, 0.22648, 1];
+  dalek.specular = [0.628281, 0.555802, 0.366065, 1];
+  dalek.shininess = 0.4;
 
   return dalek;
 }
