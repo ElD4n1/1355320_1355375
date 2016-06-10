@@ -115,8 +115,8 @@ function createSceneGraph(gl, resources) {
 
   {
     //initialize light
-    lightNode = new LightSGNode(); //use now framework implementation of light node
-    lightNode.ambient = [0.0, 0.0, 0.0, 1];
+    lightNode = new LightSGNode();
+    lightNode.ambient = [0.1, 0.1, 0.1, 1];
     lightNode.diffuse = [0.8, 0.8, 0.8, 1];
     lightNode.specular = [1, 1, 1, 1];
     lightNode.position = [0, 0, 0];
@@ -151,6 +151,7 @@ function createSceneGraph(gl, resources) {
   planetNode.append(translateDalek);
 
   planetNode.append(new TransformationSGNode(glm.translate(5,-13,0),createDalek()));
+
 
   planetNode.append(new TransformationSGNode(glm.translate(0,-15,2), new TransformationSGNode(glm.rotateX(90),createLamp())));
 
@@ -188,7 +189,7 @@ tardis.shininess = 0;
 
     let translateMoon = new TransformationSGNode(glm.translate(15,-5,-15));
     translateMoon.append(moonNode);
-//    translateMoon.append(moonLightNode);
+    translateMoon.append(moonLightNode);
     orbitMoon.append(translateMoon)
     planetNode.append(orbitMoon);
 
@@ -215,22 +216,22 @@ function createLamp(){
 
 // Returns a Dalek node
 function createDalek(){
-  let dalek = new RenderSGNode(makeTrapeze(1,1,0.2,0));
+  let dalek = new TransformationSGNode(mat4.create(),new TransformationSGNode(glm.translate(1,0,0),new TransformationSGNode(glm.rotateY(180),new RenderSGNode(makeTrapeze(1,1,0.2,0)))));
   dalek.append(new TransformationSGNode(glm.translate(0, 0,1.2), new RenderSGNode(makeTrapeze(1,1,0.2,0))));
   dalek.append(new TransformationSGNode(glm.rotateY(270), new RenderSGNode(makeTrapeze(1.2,1.2,0.2,0))));
   dalek.append(new TransformationSGNode(glm.translate(1, 0,1.2), new TransformationSGNode(glm.rotateY(90), new RenderSGNode(makeTrapeze(1.2,1.2,0.2,0)))));
-  dalek.append(new TransformationSGNode(glm.translate(0, 0.2,0), new TransformationSGNode(glm.rotateX(90), new RenderSGNode(makeTrapeze(1,1,1.2,0)))));
+  dalek.append(new TransformationSGNode(glm.translate(0, 0.2,1.2), new TransformationSGNode(glm.rotateX(270), new RenderSGNode(makeTrapeze(1,1,1.2,0)))));
 
-  dalek.append(new TransformationSGNode(glm.translate(0.2, -0.9,0.2), new RenderSGNode(makeTrapeze(0.6,0.6,0.25,0))));
+  dalek.append(new TransformationSGNode(glm.translate(0.8, -0.9,0.2), new TransformationSGNode(glm.rotateY(180),new RenderSGNode(makeTrapeze(0.6,0.6,0.25,0)))));
   dalek.append(new TransformationSGNode(glm.translate(0.2, -0.9,0.8), new RenderSGNode(makeTrapeze(0.6,0.6,0.25,0))));
-  dalek.append(new TransformationSGNode(glm.translate(0.2, -0.9,0.8), new TransformationSGNode(glm.rotateY(90), new RenderSGNode(makeTrapeze(0.6,0.6,0.25,0)))));
+  dalek.append(new TransformationSGNode(glm.translate(0.2, -0.9,0.2), new TransformationSGNode(glm.rotateY(270), new RenderSGNode(makeTrapeze(0.6,0.6,0.25,0)))));
   dalek.append(new TransformationSGNode(glm.translate(0.8, -0.9,0.8), new TransformationSGNode(glm.rotateY(90), new RenderSGNode(makeTrapeze(0.6,0.6,0.25,0)))));
   dalek.append(new TransformationSGNode(glm.translate(0.2, -0.9,0.2), new TransformationSGNode(glm.rotateX(90), new RenderSGNode(makeTrapeze(0.6,0.6,0.6,0)))));
 
   dalek.append(new TransformationSGNode(glm.translate(0,0,1.2), new TransformationSGNode(glm.rotateY(90),new TransformationSGNode(glm.rotateX(163), new RenderSGNode(makeTrapeze(1.2,0.6,0.7,0.4))))));
   dalek.append(new TransformationSGNode(glm.translate(1,0,0),new TransformationSGNode(glm.rotateY(270),new TransformationSGNode(glm.rotateX(163),new RenderSGNode(makeTrapeze(1.2,0.6,0.7,0.2))))));
-  dalek.append(new TransformationSGNode(glm.rotateX(163),new RenderSGNode(makeTrapeze(1,0.6,0.7,0.2))));
-  dalek.append(new TransformationSGNode(glm.translate(0,0,1.2),new TransformationSGNode(glm.rotateX(211),new RenderSGNode(makeTrapeze(1,0.6,0.8,0.2)))));
+  dalek.append(new TransformationSGNode(glm.rotateX(163), new RenderSGNode(makeTrapeze(1,0.6,0.7,0.2)))); //Backside
+  dalek.append(new TransformationSGNode(glm.translate(1,0,1.2),new TransformationSGNode(glm.rotateX(211),new TransformationSGNode(glm.rotateY(180),new RenderSGNode(makeTrapeze(1,0.6,0.8,0.2))))));
   dalek.append(new TransformationSGNode(glm.translate(0.5,-0.9,0.5),new RenderSGNode(makeSphere(0.3,15,15))));
 //Spheres on body
   dalek.append(new TransformationSGNode(glm.translate(0.2,-0.5,0.3),new RenderSGNode(makeSphere(0.1,10,10))));
@@ -473,10 +474,12 @@ function initCubeMap(resources) {
   gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_Z, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, resources.env_pos_z);
   gl.texImage2D(gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, resources.env_neg_z);
   //generate mipmaps (optional)
-//  gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+  gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
   //unbind the texture again
   gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
 }
+
+
 
 
 //a scene graph node for setting environment mapping parameters
