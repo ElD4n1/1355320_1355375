@@ -44,6 +44,8 @@ var renderTargetFramebuffer;
 var framebufferWidth = 1024;
 var framebufferHeight = 1024;
 
+const planetrad = 20;
+
 
 //load the required resources using a utility function
 loadResources({
@@ -101,7 +103,7 @@ function createSceneGraph(gl, resources) {
   //add skybox by putting large sphere around us
   var skybox =  new ShaderSGNode(createProgram(gl, resources.vs_env, resources.fs_env),[
                 new EnvironmentSGNode(envcubetexture,4,false,
-                  new RenderSGNode(makeSphere(50)))
+                  new RenderSGNode(makeSphere(60)))
                 ]);
   root.append(skybox);
 
@@ -122,20 +124,21 @@ function createSceneGraph(gl, resources) {
     lightNode.position = [0, 0, 0];
 
     orbitSun = new TransformationSGNode(mat4.create());
-    translateLight = new TransformationSGNode(glm.translate(-40,-5,20)); //translating the light is the same as setting the light position
+    translateLight = new TransformationSGNode(glm.translate(-50,-5,20)); //translating the light is the same as setting the light position
 
     orbitSun.append(translateLight);
     translateLight.append(lightNode);
     translateLight.append(createLightSphere()); //add sphere for debugging: since we use 0,0,0 as our light position the sphere is at the same position as the light source
-    root.append(orbitSun);
+    root.append(new TransformationSGNode(glm.rotateX(90),orbitSun));
   }
 
   {
     //Planet
     planetNode =  new MaterialSGNode(
                   new TextureSGNode(resources.planet_texture,
-                  new RenderSGNode(makeSphere(20,40,40))
-                ));
+                  new TransformationSGNode(glm.rotateZ(90),                     //Rotate so texture border is not on top
+                  new RenderSGNode(makeSphere(planetrad,40,40))
+                )));
 
     planetNode.ambient = [0.05375, 0.05, 0.06625, 1];
     planetNode.diffuse = [ 0.18275, 0.17, 0.22525, 1];
@@ -146,13 +149,13 @@ function createSceneGraph(gl, resources) {
   }
 
   let dalek = createDalek();
-  let translateDalek = new TransformationSGNode(glm.translate(0,-20.2,0));
+  let translateDalek = new TransformationSGNode(glm.translate(0,-planetrad-0.2,0));
   translateDalek.append(dalek);
   planetNode.append(translateDalek);
 
 
 
-  planetNode.append(new TransformationSGNode(glm.rotateY(10),new TransformationSGNode(glm.translate(0,-23,0), new TransformationSGNode(glm.rotateX(90),createLamp()))));
+  planetNode.append(new TransformationSGNode(glm.rotateY(10),new TransformationSGNode(glm.translate(0,-(planetrad+2.4),0), new TransformationSGNode(glm.rotateX(90),createLamp()))));
 
 {
   //tardis
@@ -166,7 +169,7 @@ function createSceneGraph(gl, resources) {
   tardis.append(new TransformationSGNode(glm.translate(0.5,0.5,0),new TransformationSGNode(glm.rotateZ(180),new TransformationSGNode(glm.rotateX(90), new TextureSGNode(resources.tardis_side, new RenderSGNode(makeTrapeze(1,1,2,0)))))));
   tardis.append(new TransformationSGNode(glm.translate(0,0,2), new TextureSGNode(resources.tardis_top, new RenderSGNode(makeRect(0.5,0.5)))));
   rotateTardis = new TransformationSGNode(mat4.create(), new TransformationSGNode(glm.rotateX(90),tardis));
-  translateTardis =new TransformationSGNode(glm.translate(3,-20,5),rotateTardis);
+  translateTardis =new TransformationSGNode(glm.translate(3,-20,0),rotateTardis);
 
 tardis.shininess = 0;
 
@@ -186,7 +189,7 @@ tardis.shininess = 0;
     moonLightNode.position = [0, 0, 0];
     moonLightNode.uniform = 'u_light2';
 
-    let translateMoon = new TransformationSGNode(glm.translate(15,-5,-15));
+    let translateMoon = new TransformationSGNode(glm.translate(40,-5,-35));
     translateMoon.append(moonNode);
     translateMoon.append(moonLightNode);
     orbitMoon.append(translateMoon)
