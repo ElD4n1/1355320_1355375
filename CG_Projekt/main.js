@@ -33,6 +33,9 @@ var translatePlanet;
 var orbitMoon;
 var translateTardis;
 var rotateTardis;
+var smokeNode;
+
+var particles = [];
 
 //textures
 var envcubetexture;
@@ -45,6 +48,7 @@ var framebufferWidth = 1024;
 var framebufferHeight = 1024;
 
 const planetrad = 20;
+var globalSystemtime = 0;
 
 
 //load the required resources using a utility function
@@ -55,6 +59,7 @@ loadResources({
   fs_env: 'shader/envmap.fs.glsl',
   vs_texture: 'shader/texture.vs.glsl',
   fs_texture: 'shader/texture.fs.glsl',
+  vs_particle: 'shader/particle.vs.glsl',
 // Cubemap:
   env_pos_x: 'models/skybox/Galaxy_RT.jpg',
   env_neg_x: 'models/skybox/Galaxy_LT.jpg',
@@ -153,6 +158,14 @@ function createSceneGraph(gl, resources) {
   translateDalek.append(dalek);
   planetNode.append(translateDalek);
 
+  smokeNode = new RenderSGNode(makeParticle([0,0,0], [0,1,0], 0, 0.2));
+
+
+
+  translateDalek.append(new ShaderSGNode(createProgram(gl, resources.vs_particle, resources.fs_texture), [
+    smokeNode
+  ])
+);
 
 
   planetNode.append(new TransformationSGNode(glm.rotateY(10),new TransformationSGNode(glm.translate(0,-(planetrad+2.4),0), new TransformationSGNode(glm.rotateX(90),createLamp()))));
@@ -291,6 +304,24 @@ function makeTrapeze(length, width, height, offset) {
 }
 
 
+function makeParticle(pos, dir, starttime, speed){
+  var posData = [pos.x, pos.y, pos.z];
+  var textureCoordData = [0,0]
+  var dirData = [dir.x, dir.y,dir.z];
+  speed = speed || 0.3;
+  starttime = starttime || globalSystemtime;
+
+
+  return {
+    position: posData,
+    texture: textureCoordData,
+    direction: dirData,
+    speed: speed,
+    starttime: starttime
+  };
+
+}
+
 function makeZylinder(radius, length, latitudeBands) {
  radius = radius || 2;
  latitudeBands = latitudeBands || 30;
@@ -407,6 +438,18 @@ function makeHalfSphere(radius, latitudeBands, longitudeBands) {
 function render(timeInMilliseconds) {
   checkForWindowResize(gl);
 
+//Systemtime for particlesystem
+  globalSystemtime = timeInMilliseconds;
+
+
+  //Create particlesystem
+  var part = new ParticleSGNode(makeParticle([0,0,0], [0,1,0], timeInMilliseconds, 0.2));
+  smokeNode.append(part);
+  particles.push(part);
+
+
+
+
   //Rotates sun and moon around the planet
   orbitSun.matrix = glm.rotateY(timeInMilliseconds*0.005);
   orbitMoon.matrix = glm.rotateY(timeInMilliseconds*-0.001);
@@ -421,6 +464,7 @@ function render(timeInMilliseconds) {
   context.projectionMatrix = mat4.perspective(mat4.create(), 30, gl.drawingBufferWidth / gl.drawingBufferHeight, 0.01, 100);
   //very primitive camera implementation
   let lookAtMatrix = mat4.lookAt(mat4.create(), [camera.position.x,camera.position.y,camera.position.z], [camera.lookAt.x, camera.lookAt.y, camera.lookAt.z], [0,1,0]);
+
 
   context.viewMatrix = lookAtMatrix;
 
@@ -491,6 +535,24 @@ class EnvironmentSGNode extends SGNode {
     //clean up
     gl.activeTexture(gl.TEXTURE0 + this.textureunit);
     gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
+  }
+}
+
+class ParticleSGNode extends RenderSGNode {
+  constructor(particle, children) {
+    super(particle,children);
+
+  }
+
+
+
+  render(context) {
+    gl.uniform1i(gl.getUniformLocation(context.shader, 'u_systime'), false, globalSystemtime);
+
+    //call the renderer
+    //this.renderer(context);
+    //render children
+    super.render(context);
   }
 }
 
