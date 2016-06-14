@@ -34,6 +34,10 @@ var orbitMoon;
 var translateTardis;
 var rotateTardis;
 
+var smokeNode;
+var particles = [];
+var paritcleNodes = [];
+
 //textures
 var envcubetexture;
 var renderTargetColorTexture;
@@ -45,6 +49,7 @@ var framebufferWidth = 1024;
 var framebufferHeight = 1024;
 
 const planetrad = 20;
+const numberOfParticels = 1000;
 
 
 //load the required resources using a utility function
@@ -153,7 +158,8 @@ function createSceneGraph(gl, resources) {
   translateDalek.append(dalek);
   planetNode.append(translateDalek);
 
-
+  smokeNode = new TransformationSGNode(mat4.create());
+  translateDalek.append(smokeNode);
 
   planetNode.append(new TransformationSGNode(glm.rotateY(10),new TransformationSGNode(glm.translate(0,-(planetrad+2.4),0), new TransformationSGNode(glm.rotateX(90),createLamp()))));
 
@@ -402,10 +408,54 @@ function makeHalfSphere(radius, latitudeBands, longitudeBands) {
   };
 }
 
+// create Particles
+class Particle extends RenderSGNode {
+    constructor(renderer,pos, dir, speed, starttime, children){
+      super(renderer,children);
+      this.position = pos;
+      this.startposition = pos;
+      this.direction = dir;
+      this.speed = speed;
+      this.lifetime = 0.0;
+      this.starttime = starttime;
+    }
 
+    update(currenttime){
+      this.lifetime = currenttime-this.starttime;
+      this.position[0] = this.startposition[0] +(this.speed * this.lifetime) * this.direction[0] ;
+      this.position[1] = this.startposition[1] +(this.speed * this.lifetime) * this.direction[1] ;
+      this.position[2] = this.startposition[2] +(this.speed * this.lifetime) * this.direction[2] ;
+    }
+}
 
 function render(timeInMilliseconds) {
   checkForWindowResize(gl);
+  var cnt;
+  for( cnt = 0;cnt <50;cnt++){
+  let part = new Particle(makeRect(0.01,0.01),[Math.random(),Math.random(),Math.random()],[0.0,-1.0,0.0],Math.random()/10000+0.00001, timeInMilliseconds);
+  particles.push(part);
+
+  var n = new TransformationSGNode(mat4.create(),part);
+  smokeNode.append(n);
+
+  paritcleNodes.push(n);
+}
+var index;
+var p;
+  for(index = 0;index<particles.length;index++){
+    p =   particles[index];
+
+  p.update(timeInMilliseconds);
+  paritcleNodes[index].matrix = glm.translate(p.position[0], p.position[1], p.position[2]);
+
+    if(paritcleNodes.length>numberOfParticels){
+      smokeNode.remove(paritcleNodes[0]);
+      paritcleNodes.splice(0,1);
+      particles.slice(0,1);
+    }
+  }
+
+
 
   //Rotates sun and moon around the planet
   orbitSun.matrix = glm.rotateY(timeInMilliseconds*0.005);
