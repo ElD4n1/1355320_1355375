@@ -8,7 +8,7 @@ const camera = {
   },
   position: {
     x: 1,
-    y: -15,
+    y: -25,
     z:-1
   },
   direction: {
@@ -134,7 +134,7 @@ function createSceneGraph(gl, resources) {
     //Planet
     planetNode =  new MaterialSGNode(
                   new TextureSGNode(resources.planet_texture,
-                  new RenderSGNode(makeSphere(10,30,30))
+                  new RenderSGNode(makeSphere(20,40,40))
                 ));
 
     planetNode.ambient = [0.05375, 0.05, 0.06625, 1];
@@ -146,14 +146,13 @@ function createSceneGraph(gl, resources) {
   }
 
   let dalek = createDalek();
-  let translateDalek = new TransformationSGNode(glm.translate(0,-13,0));
+  let translateDalek = new TransformationSGNode(glm.translate(0,-20.2,0));
   translateDalek.append(dalek);
   planetNode.append(translateDalek);
 
-  planetNode.append(new TransformationSGNode(glm.translate(5,-13,0),createDalek()));
 
 
-  planetNode.append(new TransformationSGNode(glm.translate(0,-15,2), new TransformationSGNode(glm.rotateX(90),createLamp())));
+  planetNode.append(new TransformationSGNode(glm.rotateY(10),new TransformationSGNode(glm.translate(0,-23,0), new TransformationSGNode(glm.rotateX(90),createLamp()))));
 
 {
   //tardis
@@ -167,7 +166,7 @@ function createSceneGraph(gl, resources) {
   tardis.append(new TransformationSGNode(glm.translate(0.5,0.5,0),new TransformationSGNode(glm.rotateZ(180),new TransformationSGNode(glm.rotateX(90), new TextureSGNode(resources.tardis_side, new RenderSGNode(makeTrapeze(1,1,2,0)))))));
   tardis.append(new TransformationSGNode(glm.translate(0,0,2), new TextureSGNode(resources.tardis_top, new RenderSGNode(makeRect(0.5,0.5)))));
   rotateTardis = new TransformationSGNode(mat4.create(), new TransformationSGNode(glm.rotateX(90),tardis));
-  translateTardis =new TransformationSGNode(glm.translate(3,-13,5),rotateTardis);
+  translateTardis =new TransformationSGNode(glm.translate(3,-20,5),rotateTardis);
 
 tardis.shininess = 0;
 
@@ -400,26 +399,7 @@ function makeHalfSphere(radius, latitudeBands, longitudeBands) {
   };
 }
 
-function makeQuad(width, height, length){
-  width = width || 2;
-  length = length || 3;
-  height = height || 1;
 
-  var position = [0,0,0,  width,0,0, width,0,height,  0,0,height,
-                  0,length,0,  width,length,0, width,length,height,  0,length,height];
-
-  var normal = [0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,1,0,0,1,0,0,1,0,0,1,0];
-  var texture = [0.5, 0.33, 0.5, 0.67,  0.75, 0.67,   0.75, 0.33];
-  var index = [0, 1, 2, 2, 3, 0,4,0,3,3,7,4,4,5,1,1,0,4,1,5,6,6,2,1,5,4,7,7,6,5,3,2,6,6,7,3];
-
-
-  return {
-    position: position,
-    normal: normal,
-    texture: texture,
-    index: index
-  };
-}
 
 function render(timeInMilliseconds) {
   checkForWindowResize(gl);
@@ -478,8 +458,6 @@ function initCubeMap(resources) {
   //unbind the texture again
   gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
 }
-
-
 
 
 //a scene graph node for setting environment mapping parameters
