@@ -25,6 +25,7 @@ const camera = {
 
 //scene graph nodes
 var root = null;
+var rootnoPlanet;
 var lightNode;
 var translateLight;
 var orbitSun;
@@ -33,6 +34,8 @@ var translatePlanet;
 var orbitMoon;
 var translateTardis;
 var rotateTardis;
+var objectsNode;
+var shadowNode;
 
 //textures
 var envcubetexture;
@@ -53,6 +56,8 @@ loadResources({
   fs_env: 'shader/envmap.fs.glsl',
   vs_texture: 'shader/texture.vs.glsl',
   fs_texture: 'shader/texture.fs.glsl',
+  vs_single: 'shader/single.vs.glsl',
+  fs_single: 'shader/single.fs.glsl',
 // Cubemap:
   env_pos_x: 'models/skybox/Galaxy_RT.jpg',
   env_neg_x: 'models/skybox/Galaxy_LT.jpg',
@@ -87,7 +92,10 @@ function init(resources) {
   //create scenegraph
   root = createSceneGraph(gl, resources);
 
-  //create scenegraph without floor and simple shader
+  //create scenegraph without planet and simple shader
+  rootnoPlanet = new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_texture));
+  rootnoPlanet.append(objectsNode); //reuse model part
+
 
   initInteraction(gl.canvas);
 }
@@ -96,12 +104,17 @@ function createSceneGraph(gl, resources) {
   //create scenegraph
   const root = new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_texture));
 
+  //add node for setting shadow parameters
+    shadowNode = new ShadowSGNode(renderTargetDepthTexture,3);
+    root.append(shadowNode);
 
+    objectsNode = new TransformationSGNode(mat4.create());
+    shadowNode.append(objectsNode);
 
   //add skybox by putting large sphere around us
   var skybox =  new ShaderSGNode(createProgram(gl, resources.vs_env, resources.fs_env),[
                 new EnvironmentSGNode(envcubetexture,4,false,
-                  new RenderSGNode(makeSphere(50)))
+                  new RenderSGNode(makeSphere(60)))
                 ]);
   root.append(skybox);
 
@@ -122,12 +135,12 @@ function createSceneGraph(gl, resources) {
     lightNode.position = [0, 0, 0];
 
     orbitSun = new TransformationSGNode(mat4.create());
-    translateLight = new TransformationSGNode(glm.translate(-40,-5,20)); //translating the light is the same as setting the light position
+    translateLight = new TransformationSGNode(glm.translate(-50,-5,20)); //translating the light is the same as setting the light position
 
     orbitSun.append(translateLight);
     translateLight.append(lightNode);
     translateLight.append(createLightSphere()); //add sphere for debugging: since we use 0,0,0 as our light position the sphere is at the same position as the light source
-    root.append(orbitSun);
+    shadowNode.append(orbitSun);
   }
 
   {
@@ -142,17 +155,17 @@ function createSceneGraph(gl, resources) {
     planetNode.specular = [ 0.332741, 0.328634, 0.346435, 1];
     planetNode.shininess = 0.9;
 
-    root.append(planetNode);
+    objectsNode.append(planetNode);
   }
 
   let dalek = createDalek();
   let translateDalek = new TransformationSGNode(glm.translate(0,-20.2,0));
   translateDalek.append(dalek);
-  planetNode.append(translateDalek);
+  objectsNode.append(translateDalek);
 
 
 
-  planetNode.append(new TransformationSGNode(glm.rotateY(10),new TransformationSGNode(glm.translate(0,-23,0), new TransformationSGNode(glm.rotateX(90),createLamp()))));
+  objectsNode.append(new TransformationSGNode(glm.rotateY(10),new TransformationSGNode(glm.translate(0,-23,0), new TransformationSGNode(glm.rotateX(90),createLamp()))));
 
 {
   //tardis
@@ -166,15 +179,15 @@ function createSceneGraph(gl, resources) {
   tardis.append(new TransformationSGNode(glm.translate(0.5,0.5,0),new TransformationSGNode(glm.rotateZ(180),new TransformationSGNode(glm.rotateX(90), new TextureSGNode(resources.tardis_side, new RenderSGNode(makeTrapeze(1,1,2,0)))))));
   tardis.append(new TransformationSGNode(glm.translate(0,0,2), new TextureSGNode(resources.tardis_top, new RenderSGNode(makeRect(0.5,0.5)))));
   rotateTardis = new TransformationSGNode(mat4.create(), new TransformationSGNode(glm.rotateX(90),tardis));
-  translateTardis =new TransformationSGNode(glm.translate(3,-20,5),rotateTardis);
+  translateTardis =new TransformationSGNode(glm.translate(3,-20,-2),rotateTardis);
 
 tardis.shininess = 0;
 
-  planetNode.append(translateTardis);
+  objectsNode.append(translateTardis);
 }
 
     let moonNode = new TextureSGNode(resources.moon_texture,
-                      new RenderSGNode(makeSphere(3,10,10)));
+                      new RenderSGNode(makeSphere(6,10,10)));
 
 
     orbitMoon = new TransformationSGNode(mat4.create());
@@ -186,11 +199,11 @@ tardis.shininess = 0;
     moonLightNode.position = [0, 0, 0];
     moonLightNode.uniform = 'u_light2';
 
-    let translateMoon = new TransformationSGNode(glm.translate(15,-5,-15));
+    let translateMoon = new TransformationSGNode(glm.translate(35,-5,-35));
     translateMoon.append(moonNode);
     translateMoon.append(moonLightNode);
     orbitMoon.append(translateMoon)
-    planetNode.append(orbitMoon);
+    objectsNode.append(orbitMoon);
 
 
 
@@ -431,6 +444,41 @@ function render(timeInMilliseconds) {
   requestAnimationFrame(render);
 }
 
+//draw scene for shadow map
+function renderToTexture(timeInMilliseconds)
+{
+  //bind framebuffer to draw scene into texture
+  gl.bindFramebuffer(gl.FRAMEBUFFER, renderTargetFramebuffer);
+
+  //setup viewport
+  gl.viewport(0, 0, framebufferWidth, framebufferHeight);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+  //setup context and camera matrices
+  const context = createSGContext(gl);
+  //setup a projection matrix for the light camera which is large enough to capture our scene
+  context.projectionMatrix = mat4.perspective(mat4.create(), 30, framebufferWidth / framebufferHeight, 1, 10);
+  //compute the light's position in world space
+  let lightModelMatrix = mat4.multiply(mat4.create(), rotateLight.matrix, translateLight.matrix);
+  let lightPositionVector = vec4.fromValues(lightNode.position[0], lightNode.position[1], lightNode.position[2], 1);
+  let worldLightPos = vec4.transformMat4(vec4.create(), lightPositionVector, lightModelMatrix);
+  //let the light "shine" towards the scene center (i.e. towards C3PO)
+  let worldLightLookAtPos = [0,0,0];
+  let upVector = [0,1,0];
+  //TASK 1.1: setup camera to look at the scene from the light's perspective
+  let lookAtMatrix = mat4.lookAt(mat4.create(), worldLightPos, worldLightLookAtPos, upVector); //replace me for TASK 1.1
+  context.viewMatrix = lookAtMatrix;
+
+  //multiply and save light projection and view matrix for later use in shadow mapping shader!
+  shadowNode.lightViewProjectionMatrix = mat4.multiply(mat4.create(),context.projectionMatrix,context.viewMatrix);
+
+  //render scenegraph
+  rootnoPlanet.render(context); //scene graph without floor to avoid reading from the same texture as we write to...
+
+  //disable framebuffer (render to screen again)
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+}
+
 
 function initCubeMap(resources) {
   //create the texture
@@ -457,6 +505,38 @@ function initCubeMap(resources) {
   gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
   //unbind the texture again
   gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
+}
+
+//a scene graph node for setting shadow parameters
+class ShadowSGNode extends SGNode {
+  constructor(shadowtexture, textureunit, children) {
+      super(children);
+      this.shadowtexture = shadowtexture;
+      this.textureunit = textureunit;
+
+      this.lightViewProjectionMatrix = mat4.create(); //has to be updated each frame
+  }
+
+  render(context) {
+    //set additional shader parameters
+    gl.uniform1i(gl.getUniformLocation(context.shader, 'u_depthMap'), this.textureunit);
+
+    //TASK 2.1: compute eye-to-light matrix by multiplying this.lightViewProjectionMatrix and context.invViewMatrix
+    //Hint: Look at the computation of lightViewProjectionMatrix to see how to multiply two matrices and for the correct order of the matrices!
+    var eyeToLightMatrix = mat4.multiply( mat4.create(), this.lightViewProjectionMatrix, context.invViewMatrix);
+    gl.uniformMatrix4fv(gl.getUniformLocation(context.shader, 'u_eyeToLightMatrix'), false, eyeToLightMatrix);
+
+    //activate and bind texture
+    gl.activeTexture(gl.TEXTURE0 + this.textureunit);
+    gl.bindTexture(gl.TEXTURE_2D, this.shadowtexture);
+
+    //render children
+    super.render(context);
+
+    //clean up
+    gl.activeTexture(gl.TEXTURE0 + this.textureunit);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+  }
 }
 
 

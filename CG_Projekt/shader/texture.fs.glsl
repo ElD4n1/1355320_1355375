@@ -37,6 +37,11 @@ uniform bool u_enableTexturing;
 varying vec2 v_texCoord;
 uniform sampler2D u_tex;
 
+
+//shadow related variables
+varying vec4 v_shadowMapTexCoord;
+uniform sampler2D u_depthMap;
+
 vec4 calculateSimplePointLight(Light light, Material material, vec3 lightVec, vec3 normalVec, vec3 eyeVec, vec4 textureColor) {
 	lightVec = normalize(lightVec);
 	normalVec = normalize(normalVec);
@@ -59,7 +64,40 @@ vec4 calculateSimplePointLight(Light light, Material material, vec3 lightVec, ve
 	vec4 c_spec = clamp(spec * light.specular * material.specular, 0.0, 1.0);
 	vec4 c_em   = material.emission;
 
-  return c_amb + c_diff + c_spec + c_em;
+	//TASK 2.3: apply perspective division to v_shadowMapTexCoord and save to shadowMapTexCoord3D
+  vec3 shadowMapTexCoord3D = v_shadowMapTexCoord.xyz/v_shadowMapTexCoord.w;
+
+	//do texture space transformation (-1 to 1 -> 0 to 1)
+	shadowMapTexCoord3D = vec3(0.5,0.5,0.5) + shadowMapTexCoord3D*0.5;
+	//substract small amount from z to get rid of self shadowing (TRY: disable to see difference)
+	shadowMapTexCoord3D.z -= 0.003;
+
+
+  float shadowCoeff = 0.0; //set to 1 if no shadow!
+	//TASK 2.4: look up depth in u_depthMap and set shadow coefficient (shadowCoeff) to 0 based on depth comparison
+	if(shadowMapTexCoord3D.z < texture2D(u_depthMap, shadowMapTexCoord3D.xy).r){
+		shadowCoeff = 1.0;
+	}
+
+  //EXTRA TASK: Improve shadow quality by sampling multiple shadow coefficients (a.k.a. PCF)
+	/*const float offset = 0.002;
+	const float factor = 1.0;
+	for(float x=-factor*offset; x <=factor*offset; x+=offset){
+		for(float y = -factor*offset;y<=factor*offset; y+=offset){
+
+			vec2 cord = vec2(shadowMapTexCoord3D.x, shadowMapTexCoord3D.y);
+
+			if(shadowMapTexCoord3D.z < texture2D(u_depthMap, cord).r){
+				shadowCoeff += 1.0;
+			}
+		}
+	}
+	shadowCoeff /= (2.0*factor+1.0)*(2.0*factor+1.0);*/
+
+
+  return c_amb + shadowCoeff*c_diff + shadowCoeff*c_spec + c_em;
+
+
 }
 
 void main (void) {
@@ -70,7 +108,7 @@ void main (void) {
     textureColor = texture2D(u_tex,v_texCoord);
   }
 
-	gl_FragColor = calculateSimplePointLight(u_light, u_material, v_lightVec, v_normalVec, v_eyeVec, textureColor) +
+	gl_FragColor = calculateSimplePointLight(u_light, u_material, v_lightVec, v_normalVec, v_eyeVec, textureColor); +
                 calculateSimplePointLight(u_light2, u_material, v_light2Vec, v_normalVec, v_eyeVec, textureColor);
 
 }
