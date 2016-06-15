@@ -175,7 +175,13 @@ function createSceneGraph(gl, resources) {
   translateDalek.append(new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_particle),smokeNode));
 
   planetNode.append(new TransformationSGNode(glm.rotateY(10),new TransformationSGNode(glm.translate(0,-(planetrad+2.4),0), new TransformationSGNode(glm.rotateX(90),createLamp()))));
-  planetNode.append(new TransformationSGNode(glm.rotateY(10),new TransformationSGNode(glm.translate(0,-(planetrad),0), new TransformationSGNode(glm.rotateX(90),makeHouseLevel0()))));
+  //planetNode.append(new TransformationSGNode(glm.rotateY(10),new TransformationSGNode(glm.translate(0,-(planetrad),0), new TransformationSGNode(glm.rotateX(90),createHouseLevel0()))));
+
+  //house
+  let level0 = new TransformationSGNode(glm.rotateY(10), new TransformationSGNode(glm.rotateX(90),createHouseLevel0()));
+  let level1 = new TransformationSGNode(glm.rotateY(10), new TransformationSGNode(glm.rotateX(90),createHouseLevel1(resources)));
+  let level2 = new TransformationSGNode(glm.rotateY(10), new TransformationSGNode(glm.rotateX(90),createHouseLevel2(resources)));
+  planetNode.append(new LevelOfDetailSGNode([0.0, -planetrad, 0.0], level0, level1, level2));
 
 {
   //tardis
@@ -293,7 +299,7 @@ function createDalek(){
   return dalek;
 }
 
-function makeHouseLevel0() {
+function createHouseLevel0() {
   let length = 6;
   let width = 3;
   let height = 2;
@@ -313,7 +319,7 @@ function makeHouseLevel0() {
   return house;
 }
 
-function makeHouseLevel1(resources) {
+function createHouseLevel1(resources) {
   let length = 6;
   let width = 3;
   let height = 3.5;
@@ -347,7 +353,7 @@ function makeHouseLevel1(resources) {
   return house;
 }
 
-function makeHouseLevel2(resources) {
+function createHouseLevel2(resources) {
   let length = 6;
   let width = 3;
   let height = 3.5;
@@ -368,7 +374,7 @@ function makeHouseLevel2(resources) {
   let frontwall = new TextureSGNode(resources.wall_texture, new RenderSGNode(makeTrapeze(windowlengthpos, windowlengthpos, wallheight)));
   let roof = new TextureSGNode(resources.roof_texture, new RenderSGNode(makeTrapeze(length, length, roofwidth, 0)));
   let roofside = new TextureSGNode(resources.roof_side_texture, new RenderSGNode(makeRightTriangle(roofwidth, roofwidth)));
-  let window = makeWindow(resources, windowwidth, windowheight);
+  let window = createWindow(resources, windowwidth, windowheight);
 
   // front wall (divided into pieces because of windows and door)
   frontwall.append(new TransformationSGNode(glm.translate(windowlengthpos,0,0), new RenderSGNode(makeTrapeze(windowwidth,windowwidth,windowheightpos))));
@@ -409,7 +415,7 @@ function makeHouseLevel2(resources) {
   return house;
 }
 
-function makeWindow(resources, width, height) {
+function createWindow(resources, width, height) {
   let framewidth = height/8;
   let frame = new TextureSGNode(resources.wood_texture, new RenderSGNode(makeTrapeze(width,width,framewidth,0)));
   let glass = new MaterialSGNode(new TransformationSGNode(glm.translate(framewidth,framewidth,0), new RenderSGNode(makeTrapeze(width-2*framewidth, width-2*framewidth, height-2*framewidth, 0))));
@@ -735,6 +741,40 @@ class TextureSGNode extends AdvancedTextureSGNode {
 
         gl.uniform1i(gl.getUniformLocation(context.shader, 'u_enableTexturing'), 0);
     }
+}
+
+class LevelOfDetailSGNode extends SGNode {
+    constructor(position, level0, level1, level2, children) {
+      super(children);
+      this.position = position;
+      this.level0 = new TransformationSGNode(glm.translate(position[0], position[1], position[2]), level0);
+      this.level1 = new TransformationSGNode(glm.translate(position[0], position[1], position[2]), level1);
+      this.level2 = new TransformationSGNode(glm.translate(position[0], position[1], position[2]), level2);
+    }
+
+    render(context) {
+      let distance = getDistance([camera.position.x, camera.position.y, camera.position.z], this.position);  // calculate the distance between the camera and this object
+
+      console.log(distance);
+
+      if (distance > 10) {
+        this.level0.render(context);
+      } else if (distance > 5) {
+        this.level1.render(context);
+      } else {
+        this.level2.render(context);
+      }
+
+      // render children
+      super.render(context);
+    }
+}
+
+// calculates the euclidian distance between two points
+function getDistance(pos1, pos2) {
+    let vector = [pos2[0] - pos1[0], pos2[1] - pos1[1], pos2[2] - pos1[2]];
+    let distance = Math.sqrt(Math.pow(vector[0],2), Math.pow(vector[1],2), Math.pow(vector[2],2));
+    return distance;
 }
 
 //camera control
