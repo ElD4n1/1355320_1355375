@@ -62,6 +62,7 @@ loadResources({
   vs_texture: 'shader/texture.vs.glsl',
   fs_texture: 'shader/texture.fs.glsl',
   fs_particle: 'shader/particle.fs.glsl',
+  fs_light: 'shader/lightsphere.fs.glsl',
 // Cubemap:
   env_pos_x: 'models/skybox/Galaxy_RT.jpg',
   env_neg_x: 'models/skybox/Galaxy_LT.jpg',
@@ -77,6 +78,7 @@ loadResources({
   tardis_front: 'models/Tardis/TARDIS_FRONT.jpg',
   tardis_side: 'models/Tardis/TARDIS_SIDE.jpg',
   particle_texture: 'models/particleTexture.png',
+  sun_texture: 'models/sun.jpg',
 
   wall_texture: 'models/wall_bricks.jpg',
   roof_texture: 'models/roof_bricks.jpg',
@@ -121,7 +123,7 @@ function createSceneGraph(gl, resources) {
 
   //light debug helper function
   function createLightSphere() {
-    return new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_texture), [
+    return new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_light), [
 
       new RenderSGNode(makeSphere(1.9,10,10)) // Parameters: radius, latitudeBands, longitudeBands (how round it is)
     ]);
@@ -131,12 +133,12 @@ function createSceneGraph(gl, resources) {
     //initialize light
     lightNode = new LightSGNode();
     lightNode.ambient = [0.1, 0.1, 0.1, 1];
-    lightNode.diffuse = [0.8, 0.8, 0.8, 1];
+    lightNode.diffuse = [1, 1, 1, 1];
     lightNode.specular = [1, 1, 1, 1];
-    lightNode.position = [0, 0, 0];
 
     orbitSun = new TransformationSGNode(mat4.create());
-    translateLight = new TransformationSGNode(glm.translate(-50,-5,20)); //translating the light is the same as setting the light position
+    translateLight = new TransformationSGNode(glm.translate(-52,-5,20)); //translating the light is the same as setting the light position
+    //let sunNode = new TextureSGNode(resources.sun_texture, new RenderSGNode(makeSphere(1)));
 
     orbitSun.append(translateLight);
     translateLight.append(lightNode);
