@@ -49,7 +49,7 @@ var framebufferWidth = 1024;
 var framebufferHeight = 1024;
 
 const planetrad = 20;
-const numberOfParticels = 100000;
+const numberOfParticels = 10000;
 const particleLifeTime =2000;
 
 
@@ -61,6 +61,7 @@ loadResources({
   fs_env: 'shader/envmap.fs.glsl',
   vs_texture: 'shader/texture.vs.glsl',
   fs_texture: 'shader/texture.fs.glsl',
+  fs_particle: 'shader/particle.fs.glsl',
 // Cubemap:
   env_pos_x: 'models/skybox/Galaxy_RT.jpg',
   env_neg_x: 'models/skybox/Galaxy_LT.jpg',
@@ -91,6 +92,8 @@ function init(resources) {
   initCubeMap(resources);
 
   gl.enable(gl.DEPTH_TEST);
+  gl.enable(gl.BLEND);
+gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
   //create scenegraph
   root = createSceneGraph(gl, resources);
@@ -159,13 +162,8 @@ function createSceneGraph(gl, resources) {
   translateDalek.append(dalek);
   planetNode.append(translateDalek);
 
-  smokeNode = new MaterialSGNode();
-  smokeNode.ambient = [0.0, 0.0, 0.00, 0.0];
-  smokeNode.diffuse = [ 0.0, 0.0, 0.0, 0.0];
-  smokeNode.specular = [ 1.0, 0.0, 0.0, 0.5];
-  smokeNode.shininess = 0.0;
+  smokeNode = new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_particle));
 
-  //smokeNode.append(new TransformationSGNode(glm.translate(1,-1,1), new RenderSGNode(makeRect(1,1))));
 
   translateDalek.append(smokeNode);
 
