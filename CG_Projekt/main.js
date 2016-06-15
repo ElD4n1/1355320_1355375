@@ -164,12 +164,12 @@ function createSceneGraph(gl, resources) {
     root.append(planetNode);
   }
 
-  let dalek = new TransformationSGNode(glm.scale(scaleObjects,scaleObjects,scaleObjects),  createDalek());
-  let translateDalek = new TransformationSGNode(glm.translate(0,-planetrad,0));
+  let dalek = createDalek();
+  let translateDalek = new TransformationSGNode(glm.transform({ translate: [0,-planetrad,0], scale: scaleObjects }));
   translateDalek.append(dalek);
   planetNode.append(translateDalek);
 
-  smokeNode = new TransformationSGNode(glm.scale(scaleObjects,scaleObjects,scaleObjects),new TextureSGNode(resources.particle_texture) );
+  smokeNode = new TextureSGNode(resources.particle_texture) ;
 
 
   translateDalek.append(new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_particle),smokeNode));
