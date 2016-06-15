@@ -49,7 +49,8 @@ var framebufferWidth = 1024;
 var framebufferHeight = 1024;
 
 const planetrad = 20;
-const numberOfParticels = 1000;
+const numberOfParticels = 100000;
+const particleLifeTime =2000;
 
 
 //load the required resources using a utility function
@@ -158,7 +159,14 @@ function createSceneGraph(gl, resources) {
   translateDalek.append(dalek);
   planetNode.append(translateDalek);
 
-  smokeNode = new TransformationSGNode(mat4.create());
+  smokeNode = new MaterialSGNode();
+  smokeNode.ambient = [0.0, 0.0, 0.00, 0.0];
+  smokeNode.diffuse = [ 0.0, 0.0, 0.0, 0.0];
+  smokeNode.specular = [ 1.0, 0.0, 0.0, 0.5];
+  smokeNode.shininess = 0.0;
+
+  //smokeNode.append(new TransformationSGNode(glm.translate(1,-1,1), new RenderSGNode(makeRect(1,1))));
+
   translateDalek.append(smokeNode);
 
   planetNode.append(new TransformationSGNode(glm.rotateY(10),new TransformationSGNode(glm.translate(0,-(planetrad+2.4),0), new TransformationSGNode(glm.rotateX(90),createLamp()))));
@@ -412,47 +420,50 @@ function makeHalfSphere(radius, latitudeBands, longitudeBands) {
 class Particle extends RenderSGNode {
     constructor(renderer,pos, dir, speed, starttime, children){
       super(renderer,children);
-      this.position = pos;
+      this.position = [0,0,0];
       this.startposition = pos;
       this.direction = dir;
       this.speed = speed;
-      this.lifetime = 0.0;
+      this.age = 0.0;
       this.starttime = starttime;
     }
 
     update(currenttime){
-      this.lifetime = currenttime-this.starttime;
-      this.position[0] = this.startposition[0] +(this.speed * this.lifetime) * this.direction[0] ;
-      this.position[1] = this.startposition[1] +(this.speed * this.lifetime) * this.direction[1] ;
-      this.position[2] = this.startposition[2] +(this.speed * this.lifetime) * this.direction[2] ;
+      this.age = currenttime-this.starttime;
+
+
+
+      if(this.age>particleLifeTime){
+        this.starttime = currenttime;
+        this.age = 0.0;
+        this.position[0]=this.startposition[0];
+        this.position[1] =this.startposition[1];
+        this.position[2] = this.startposition[2];
+      } else {
+        this.position[0] = this.startposition[0] +(this.speed * this.age) * this.direction[0] ;
+        this.position[1] = this.startposition[1] +(this.speed * this.age) * this.direction[1] ;
+        this.position[2] = this.startposition[2] +(this.speed * this.age) * this.direction[2] ;
+      }
     }
 }
 
 function render(timeInMilliseconds) {
   checkForWindowResize(gl);
-  var cnt;
-  for( cnt = 0;cnt <50;cnt++){
-  let part = new Particle(makeRect(0.01,0.01),[Math.random(),Math.random(),Math.random()],[0.0,-1.0,0.0],Math.random()/10000+0.00001, timeInMilliseconds);
-  particles.push(part);
 
-  var n = new TransformationSGNode(mat4.create(),part);
-  smokeNode.append(n);
+  if(paritcleNodes.length<numberOfParticels){
+    let part = new Particle(makeRect(0.005,0.005),[Math.random(),0,Math.random()],[0.0,-1.0,0.0],Math.random()/1000+0.0001, timeInMilliseconds);
+    particles.push(part);
 
-  paritcleNodes.push(n);
-}
-var index;
-var p;
+    var n = new TransformationSGNode(mat4.create(),part);
+    smokeNode.append(n);
+    paritcleNodes.push(n);
+  }
+  var index;
+  var p;
   for(index = 0;index<particles.length;index++){
     p =   particles[index];
-
-  p.update(timeInMilliseconds);
-  paritcleNodes[index].matrix = glm.translate(p.position[0], p.position[1], p.position[2]);
-
-    if(paritcleNodes.length>numberOfParticels){
-      smokeNode.remove(paritcleNodes[0]);
-      paritcleNodes.splice(0,1);
-      particles.slice(0,1);
-    }
+    p.update(timeInMilliseconds);
+    paritcleNodes[index].matrix = glm.translate(p.position[0], p.position[1], p.position[2]);
   }
 
 
