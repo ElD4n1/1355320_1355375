@@ -84,7 +84,9 @@ loadResources({
 
   wall_texture: 'models/wall_bricks.jpg',
   roof_texture: 'models/roof_bricks.jpg',
-  roof_side_texture: 'models/roof_wood.jpg'
+  roof_side_texture: 'models/roof_wood.jpg',
+  wood_texture: 'models/wood.jpg',
+  door_texture: 'models/door.jpg'
 }).then(function (resources /*an object containing our keys with the loaded resources*/) {
   init(resources);
 
@@ -176,7 +178,8 @@ function createSceneGraph(gl, resources) {
   planetNode.append(new TransformationSGNode(glm.transform({ rotateX :3,rotateZ: -1}),new TransformationSGNode(glm.translate(0,-(planetrad+1),0), new TransformationSGNode(glm.rotateX(90),new TransformationSGNode(glm.scale(0.4,0.4,0.4),createLamp())))));
 
   planetNode.append(new TransformationSGNode(glm.transform({ rotateX :-3,rotateZ: -1}),new TransformationSGNode(glm.translate(0,-(planetrad+1),0), new TransformationSGNode(glm.rotateX(90),new TransformationSGNode(glm.scale(0.4,0.4,0.4),createLamp())))));
-  planetNode.append(new TransformationSGNode(glm.rotateZ(4),new TransformationSGNode(glm.translate(0,-(planetrad),0), new TransformationSGNode(glm.transform({ rotateZ: 90, rotateX : 90, scale: scaleObjects }),makeHouseLevel1(resources)))));
+  planetNode.append(new TransformationSGNode(glm.rotateZ(4),new TransformationSGNode(glm.translate(0,-(planetrad),0), new TransformationSGNode(glm.transform({ rotateZ: 90, rotateX : 90, scale: scaleObjects }),makeHouseLevel2(resources)))));
+
 
 {
   //tardis
@@ -294,7 +297,7 @@ function createDalek(){
   return dalek;
 }
 
-function makeHouseLevel2() {
+function makeHouseLevel0() {
   let length = 6;
   let width = 3;
   let height = 2;
@@ -307,9 +310,9 @@ function makeHouseLevel2() {
   house.append(new TransformationSGNode(glm.translate(0,0,height), new RenderSGNode(makeTrapeze(length,length,width,0))));
 
   house.ambient = [0.05375, 0.05, 0.06625, 1];
-  house.diffuse = [ 0.18275, 0.17, 0.22525, 1];
-  house.specular = [ 0.332741, 0.328634, 0.346435, 1];
-  house.shininess = 0.9;
+  house.diffuse = [ 139/256, 105/256, 105/256, 1];
+  house.specular = [ 139/256, 105/256, 105/256, 1];
+  house.shininess = 0.4;
 
   return house;
 }
@@ -343,22 +346,98 @@ function makeHouseLevel1(resources) {
   house.ambient = [0.05375, 0.05, 0.06625, 1];
   house.diffuse = [ 0.18275, 0.17, 0.22525, 1];
   house.specular = [ 0.332741, 0.328634, 0.346435, 1];
-  house.shininess = 0.9;
+  house.shininess = 0.4;
 
   return house;
 }
 
-function makeWindow(width, height) {
+function makeHouseLevel2(resources) {
+  let length = 6;
+  let width = 3;
+  let height = 3.5;
+  let wallheight = height/3.5 * 2;
+  let roofheight = height/3.5 * 1.5;
+  let roofwidth = Math.sqrt(Math.pow(roofheight,2) + Math.pow(width/2,2));
+  let windowwidth = 1;
+  let windowheight = 1;
+  let windowheightpos = wallheight/3;
+  let windowlengthpos = length/6;
+  let doorwidth = 0.75;
+  let doorheight = 1.5;
+  let doorlengthpos = length/2 - doorwidth/2;
+
+  let house = new MaterialSGNode(new RenderSGNode(makeTrapeze(length,length,width,0))); // create ground plate
+  let longwall = new TextureSGNode(resources.wall_texture, new RenderSGNode(makeTrapeze(length,length,wallheight,0)));
+  let sidewall = new TextureSGNode(resources.wall_texture, new RenderSGNode(makeTrapeze(width,width,wallheight,0)));
+  let frontwall = new TextureSGNode(resources.wall_texture, new RenderSGNode(makeTrapeze(windowlengthpos, windowlengthpos, wallheight)));
+  let roof = new TextureSGNode(resources.roof_texture, new RenderSGNode(makeTrapeze(length, length, roofwidth, 0)));
+  let roofside = new TextureSGNode(resources.roof_side_texture, new RenderSGNode(makeRightTriangle(roofwidth, roofwidth)));
+  let window = makeWindow(resources, windowwidth, windowheight);
+
+  // front wall (divided into pieces because of windows and door)
+  frontwall.append(new TransformationSGNode(glm.translate(windowlengthpos,0,0), new RenderSGNode(makeTrapeze(windowwidth,windowwidth,windowheightpos))));
+  frontwall.append(new TransformationSGNode(glm.translate(windowlengthpos,windowheightpos+windowheight,0), new RenderSGNode(makeTrapeze(windowwidth,windowwidth,wallheight-windowheightpos-windowheight))));
+  frontwall.append(new TransformationSGNode(glm.translate(windowlengthpos+windowwidth,0,0), new RenderSGNode(makeTrapeze(doorlengthpos - windowlengthpos - windowwidth,doorlengthpos - windowlengthpos - windowwidth,wallheight))));
+  frontwall.append(new TransformationSGNode(glm.translate(windowlengthpos+windowwidth,0,0), new RenderSGNode(makeTrapeze(doorlengthpos - windowlengthpos - windowwidth,doorlengthpos - windowlengthpos - windowwidth,wallheight))));
+  frontwall.append(new TransformationSGNode(glm.translate(doorlengthpos,doorheight,0), new RenderSGNode(makeTrapeze(doorwidth,doorwidth,wallheight - doorheight))));
+  frontwall.append(new TransformationSGNode(glm.translate(doorlengthpos + doorwidth,0,0), new RenderSGNode(makeTrapeze(doorlengthpos - windowlengthpos - windowwidth,doorlengthpos - windowlengthpos - windowwidth,wallheight))));
+  frontwall.append(new TransformationSGNode(glm.translate(length - windowlengthpos - windowwidth,windowheightpos+windowheight,0), new RenderSGNode(makeTrapeze(windowwidth,windowwidth,wallheight-windowheightpos-windowheight))));
+  frontwall.append(new TransformationSGNode(glm.translate(length - windowlengthpos - windowwidth,0,0), new RenderSGNode(makeTrapeze(windowwidth,windowwidth,windowheightpos))));
+  frontwall.append(new TransformationSGNode(glm.translate(length - windowlengthpos,0,0), new RenderSGNode(makeTrapeze(windowlengthpos,windowlengthpos,wallheight))));
+
+  // walls
+  house.append(new TransformationSGNode(glm.rotateX(90), frontwall));
+  house.append(new TransformationSGNode(glm.translate(0,width,0),new TransformationSGNode(glm.rotateZ(270),new TransformationSGNode(glm.rotateX(90), sidewall))));
+  house.append(new TransformationSGNode(glm.translate(length,0,0),new TransformationSGNode(glm.rotateZ(90),new TransformationSGNode(glm.rotateX(90), sidewall))));
+  house.append(new TransformationSGNode(glm.translate(length,width,0),new TransformationSGNode(glm.rotateZ(180),new TransformationSGNode(glm.rotateX(90), longwall))));
+  house.append(new TransformationSGNode(glm.translate(0,0,wallheight), new RenderSGNode(makeTrapeze(length,length,width,0))));
+
+  // roof
+  house.append(new TransformationSGNode(glm.translate(0,0,wallheight), new TransformationSGNode(glm.rotateX(45), roof)));
+  house.append(new TransformationSGNode(glm.translate(0,width,wallheight), new TransformationSGNode(glm.rotateX(135), roof)));
+  house.append(new TransformationSGNode(glm.translate(0,width/2,height), new TransformationSGNode(glm.rotateX(225), new TransformationSGNode(glm.rotateY(270), roofside))));
+  house.append(new TransformationSGNode(glm.translate(length,width/2,height), new TransformationSGNode(glm.rotateX(315), new TransformationSGNode(glm.rotateY(90), roofside))));
+
+  // windows
+  house.append(new TransformationSGNode(glm.translate(windowlengthpos,0,windowheightpos), new TransformationSGNode(glm.rotateX(90), window)));
+  house.append(new TransformationSGNode(glm.translate(length - windowwidth - windowlengthpos,0,windowheightpos), new TransformationSGNode(glm.rotateX(90), window)));
+
+  // door
+  house.append(new TextureSGNode(resources.door_texture, new TransformationSGNode(glm.translate(doorlengthpos,0,0), new TransformationSGNode(glm.rotateX(90), new RenderSGNode(makeTrapeze(doorwidth,doorwidth,doorheight,0))))));
+
+  house.ambient = [0.05375, 0.05, 0.06625, 1];
+  house.diffuse = [ 0.18275, 0.17, 0.22525, 1];
+  house.specular = [ 0.332741, 0.328634, 0.346435, 1];
+  house.shininess = 0.4;
+
+  return house;
+}
+
+function makeWindow(resources, width, height) {
   let framewidth = height/8;
-  let window = new MaterialSGNode(new RenderSGNode(makeTrapeze(width,width,framewidth,0)));
-  let glass = new MaterialSGNode(new RenderSGNode(makeTrapeze(width-2*framewidth, width-2*framewidth, height-2*framewidth, 0)));
+  let frame = new TextureSGNode(resources.wood_texture, new RenderSGNode(makeTrapeze(width,width,framewidth,0)));
+  let glass = new MaterialSGNode(new TransformationSGNode(glm.translate(framewidth,framewidth,0), new RenderSGNode(makeTrapeze(width-2*framewidth, width-2*framewidth, height-2*framewidth, 0))));
 
-  window.append(new TransformationSGNode(glm.translate(0,height-framewidth,0), new RenderSGNode(makeTrapeze(length,length,framewidth,0))));
-  window.append(new TransformationSGNode(glm.translate(0,framewidth,0), new RenderSGNode(makeTrapeze(framewidth,framewidth,height-2*framewidth,0))));
-  window.append(new TransformationSGNode(glm.translate(width-framewidth,framewidth,0), new RenderSGNode(makeTrapeze(framewidth,framewidth,height-2*framewidth,0))));
-  window.append(new TransformationSGNode(glm.translate(framewidth,framewidth,0), glass));
+  frame.append(new TransformationSGNode(glm.translate(0,height-framewidth,0), new RenderSGNode(makeTrapeze(length,length,framewidth,0))));
+  frame.append(new TransformationSGNode(glm.translate(0,framewidth,0), new RenderSGNode(makeTrapeze(framewidth,framewidth,height-2*framewidth,0))));
+  frame.append(new TransformationSGNode(glm.translate(width-framewidth,framewidth,0), new RenderSGNode(makeTrapeze(framewidth,framewidth,height-2*framewidth,0))));
 
-  return window;
+  frame = new MaterialSGNode(frame);
+
+  frame.ambient = [0.05375, 0.05, 0.06625, 1];
+  frame.diffuse = [ 0.18275, 0.17, 0.22525, 1];
+  frame.specular = [ 0.332741, 0.328634, 0.346435, 1];
+  frame.shininess = 0.3;
+
+  glass.append(frame);
+
+  glass.ambient = [0.2, 0.2, 0.2, 0.1];
+  glass.diffuse = [0.8, 0.8, 0.8, 0.1];
+  glass.specular = [0.1, 0.1, 0.1, 0.1];
+  glass.emission = [0, 0, 0, 0];
+  glass.shininess = 0.3;
+
+  return glass;
 }
 
 function makeTrapeze(length, width, height, offset) {
