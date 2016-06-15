@@ -33,10 +33,16 @@ var translatePlanet;
 var orbitMoon;
 var translateTardis;
 var rotateTardis;
+var rotateDoor;
 
 var smokeNode;
 var particles = [];
 var paritcleNodes = [];
+
+var isOpenDoor = 0;
+var isCloseDoor = 0;
+var doorAnimationStartTime;
+var lastrendertime = 0;
 
 //textures
 var envcubetexture;
@@ -181,7 +187,7 @@ function createSceneGraph(gl, resources) {
   let level0 = new TransformationSGNode(glm.rotateY(10), new TransformationSGNode(glm.rotateX(90),createHouseLevel0()));
   let level1 = new TransformationSGNode(glm.rotateY(10), new TransformationSGNode(glm.rotateX(90),createHouseLevel1(resources)));
   let level2 = new TransformationSGNode(glm.rotateY(10), new TransformationSGNode(glm.rotateX(90),createHouseLevel2(resources)));
-  planetNode.append(new LevelOfDetailSGNode([0.0, -planetrad, 0.0], level0, level1, level2));
+  planetNode.append(new LevelOfDetailSGNode([0.0, -planetrad-5, 0.0], level0, level1, level2));
 
 {
   //tardis
@@ -405,7 +411,8 @@ function createHouseLevel2(resources) {
   house.append(new TransformationSGNode(glm.translate(length - windowwidth - windowlengthpos,0,windowheightpos), new TransformationSGNode(glm.rotateX(90), window)));
 
   // door
-  house.append(new TextureSGNode(resources.door_texture, new TransformationSGNode(glm.translate(doorlengthpos,0,0), new TransformationSGNode(glm.rotateX(90), new RenderSGNode(makeTrapeze(doorwidth,doorwidth,doorheight,0))))));
+  rotateDoor = new TransformationSGNode(mat4.create(), new TransformationSGNode(glm.rotateX(90), new RenderSGNode(makeTrapeze(doorwidth,doorwidth,doorheight,0))));
+  house.append(new TextureSGNode(resources.door_texture, new TransformationSGNode(glm.translate(doorlengthpos,0,0), rotateDoor)));
 
   house.ambient = [0.05375, 0.05, 0.06625, 1];
   house.diffuse = [ 0.18275, 0.17, 0.22525, 1];
@@ -635,6 +642,46 @@ function makeSmoke(timeInMilliseconds){
   }
 }
 
+function openDoor() {
+  if (isCloseDoor == 1) {
+    isCloseDoor = 0;
+  }
+
+  doorAnimationStartTime = lastrendertime;
+  isOpenDoor = 1;
+}
+
+function animateDoorOpen(timeInMilliseconds) {
+  let angle = (timeInMilliseconds - doorAnimationStartTime)*0.05 % 136;
+
+  if(angle >= 135 || ((timeInMilliseconds - doorAnimationStartTime)*0.05 / 136) >= 1) {
+    isOpenDoor = 0;
+    return;
+  }
+
+  rotateDoor.matrix = glm.rotateZ(angle);
+}
+
+function closeDoor() {
+  if (isOpenDoor == 1) {
+    isOpenDoor = 0;
+  }
+
+  doorAnimationStartTime = lastrendertime;
+  isCloseDoor = 1;
+}
+
+function animateDoorClose(timeInMilliseconds) {
+  let angle = 136 - (timeInMilliseconds - doorAnimationStartTime)*0.05 % 136;
+
+  if(angle <= 0 || ((timeInMilliseconds - doorAnimationStartTime)*0.05 / 136) >= 1) {
+    isCloseDoor = 0;
+    return;
+  }
+
+  rotateDoor.matrix = glm.rotateZ(angle);
+}
+
 function render(timeInMilliseconds) {
   checkForWindowResize(gl);
 
@@ -646,6 +693,14 @@ makeSmoke(timeInMilliseconds);
   orbitSun.matrix = glm.rotateY(timeInMilliseconds*0.005);
   orbitMoon.matrix = glm.rotateY(timeInMilliseconds*-0.001);
   rotateTardis.matrix = glm.rotateY(timeInMilliseconds*0.1);
+
+  lastrendertime = timeInMilliseconds;
+  if (isOpenDoor == 1) {
+    animateDoorOpen(timeInMilliseconds);
+  } else if (isCloseDoor == 1) {
+    animateDoorClose(timeInMilliseconds);
+  }
+
   //setup viewport
   gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
   gl.clearColor(0.0, 0.0, 0.0, 1.0); // Backgroundcolor
@@ -755,8 +810,6 @@ class LevelOfDetailSGNode extends SGNode {
     render(context) {
       let distance = getDistance([camera.position.x, camera.position.y, camera.position.z], this.position);  // calculate the distance between the camera and this object
 
-      console.log(distance);
-
       if (distance > 10) {
         this.level0.render(context);
       } else if (distance > 5) {
@@ -854,6 +907,10 @@ function initInteraction(canvas) {
      camera.lookAt.x = camera.position.x + camera.direction.x;
      camera.lookAt.y = camera.position.y + camera.direction.y;
      camera.lookAt.z = camera.position.z + camera.direction.z;
-    }
+   } else if (event.code === 'KeyO') {
+     openDoor();
+   } else if (event.code === 'KeyC') {
+     closeDoor();
+   }
   });
 }
