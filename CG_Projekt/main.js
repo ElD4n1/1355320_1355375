@@ -76,9 +76,11 @@ loadResources({
   tardis_top: 'models/Tardis/TARDIS_TOP.jpg',
   tardis_front: 'models/Tardis/TARDIS_FRONT.jpg',
   tardis_side: 'models/Tardis/TARDIS_SIDE.jpg',
-  particle_texture: 'models/particleTexture.png'
+  particle_texture: 'models/particleTexture.png',
 
-  //model: 'models/C-3PO.obj'
+  wall_texture: 'models/wall_bricks.jpg',
+  roof_texture: 'models/roof_bricks.jpg',
+  roof_side_texture: 'models/roof_wood.jpg'
 }).then(function (resources /*an object containing our keys with the loaded resources*/) {
   init(resources);
 
@@ -171,6 +173,7 @@ function createSceneGraph(gl, resources) {
   translateDalek.append(new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_particle),smokeNode));
 
   planetNode.append(new TransformationSGNode(glm.rotateY(10),new TransformationSGNode(glm.translate(0,-(planetrad+2.4),0), new TransformationSGNode(glm.rotateX(90),createLamp()))));
+  planetNode.append(new TransformationSGNode(glm.rotateY(10),new TransformationSGNode(glm.translate(0,-(planetrad+2.4),0), new TransformationSGNode(glm.rotateX(90),makeHouseLevel1(resources)))));
 
 {
   //tardis
@@ -288,6 +291,73 @@ function createDalek(){
   return dalek;
 }
 
+function makeHouseLevel2() {
+  let length = 6;
+  let width = 3;
+  let height = 2;
+  let house = new MaterialSGNode(new RenderSGNode(makeTrapeze(length,length,width,0)));
+
+  house.append(new TransformationSGNode(glm.rotateX(90), new RenderSGNode(makeTrapeze(length,length,height,0))));
+  house.append(new TransformationSGNode(glm.translate(0,width,0),new TransformationSGNode(glm.rotateZ(270),new TransformationSGNode(glm.rotateX(90), new RenderSGNode(makeTrapeze(width,width,height,0))))));
+  house.append(new TransformationSGNode(glm.translate(length,0,0),new TransformationSGNode(glm.rotateZ(90),new TransformationSGNode(glm.rotateX(90), new RenderSGNode(makeTrapeze(width,width,height,0))))));
+  house.append(new TransformationSGNode(glm.translate(length,width,0),new TransformationSGNode(glm.rotateZ(180),new TransformationSGNode(glm.rotateX(90), new RenderSGNode(makeTrapeze(length,length,height,0))))));
+  house.append(new TransformationSGNode(glm.translate(0,0,height), new RenderSGNode(makeTrapeze(length,length,width,0))));
+
+  house.ambient = [0.05375, 0.05, 0.06625, 1];
+  house.diffuse = [ 0.18275, 0.17, 0.22525, 1];
+  house.specular = [ 0.332741, 0.328634, 0.346435, 1];
+  house.shininess = 0.9;
+
+  return house;
+}
+
+function makeHouseLevel1(resources) {
+  let length = 6;
+  let width = 3;
+  let height = 3.5;
+  let wallheight = height/3.5 * 2;
+  let roofheight = height/3.5 * 1.5;
+  let roofwidth = Math.sqrt(Math.pow(roofheight,2) + Math.pow(width/2,2));
+  let house = new MaterialSGNode(new RenderSGNode(makeTrapeze(length,length,width,0))); // create ground plate
+  let longwall = new TextureSGNode(resources.wall_texture, new RenderSGNode(makeTrapeze(length,length,wallheight,0)));
+  let sidewall = new TextureSGNode(resources.wall_texture, new RenderSGNode(makeTrapeze(width,width,wallheight,0)));
+  let roof = new TextureSGNode(resources.roof_texture, new RenderSGNode(makeTrapeze(length, length, roofwidth, 0)));
+  let roofside = new TextureSGNode(resources.roof_side_texture, new RenderSGNode(makeRightTriangle(roofwidth, roofwidth)));
+
+  // append walls
+  house.append(new TransformationSGNode(glm.rotateX(90), longwall));
+  house.append(new TransformationSGNode(glm.translate(0,width,0),new TransformationSGNode(glm.rotateZ(270),new TransformationSGNode(glm.rotateX(90), sidewall))));
+  house.append(new TransformationSGNode(glm.translate(length,0,0),new TransformationSGNode(glm.rotateZ(90),new TransformationSGNode(glm.rotateX(90), sidewall))));
+  house.append(new TransformationSGNode(glm.translate(length,width,0),new TransformationSGNode(glm.rotateZ(180),new TransformationSGNode(glm.rotateX(90), longwall))));
+  house.append(new TransformationSGNode(glm.translate(0,0,wallheight), new RenderSGNode(makeTrapeze(length,length,width,0))));
+
+  // append roof
+  house.append(new TransformationSGNode(glm.translate(0,0,wallheight), new TransformationSGNode(glm.rotateX(45), roof)));
+  house.append(new TransformationSGNode(glm.translate(0,width,wallheight), new TransformationSGNode(glm.rotateX(135), roof)));
+  house.append(new TransformationSGNode(glm.translate(0,width/2,height), new TransformationSGNode(glm.rotateX(225), new TransformationSGNode(glm.rotateY(270), roofside))));
+  house.append(new TransformationSGNode(glm.translate(length,width/2,height), new TransformationSGNode(glm.rotateX(315), new TransformationSGNode(glm.rotateY(90), roofside))));
+
+  house.ambient = [0.05375, 0.05, 0.06625, 1];
+  house.diffuse = [ 0.18275, 0.17, 0.22525, 1];
+  house.specular = [ 0.332741, 0.328634, 0.346435, 1];
+  house.shininess = 0.9;
+
+  return house;
+}
+
+function makeWindow(width, height) {
+  let framewidth = height/8;
+  let window = new MaterialSGNode(new RenderSGNode(makeTrapeze(width,width,framewidth,0)));
+  let glass = new MaterialSGNode(new RenderSGNode(makeTrapeze(width-2*framewidth, width-2*framewidth, height-2*framewidth, 0)));
+
+  window.append(new TransformationSGNode(glm.translate(0,height-framewidth,0), new RenderSGNode(makeTrapeze(length,length,framewidth,0))));
+  window.append(new TransformationSGNode(glm.translate(0,framewidth,0), new RenderSGNode(makeTrapeze(framewidth,framewidth,height-2*framewidth,0))));
+  window.append(new TransformationSGNode(glm.translate(width-framewidth,framewidth,0), new RenderSGNode(makeTrapeze(framewidth,framewidth,height-2*framewidth,0))));
+  window.append(new TransformationSGNode(glm.translate(framewidth,framewidth,0), glass));
+
+  return window;
+}
+
 function makeTrapeze(length, width, height, offset) {
   width = width || 1;
   height = height || 1;
@@ -305,6 +375,20 @@ function makeTrapeze(length, width, height, offset) {
   };
 }
 
+function makeRightTriangle(a, b) {
+  a = a || 1;
+  b = b || 1;
+  var position = [0, 0, 0,  a, 0, 0,  0, b, 0];
+  var normal = [0, 0, 1, 0, 0, 1, 0, 0, 1];
+  var texture = [0.5, 1 /**/, 0, 0 /**/, 1, 0];
+  var index = [0, 1, 2];
+  return {
+    position: position,
+    normal: normal,
+    texture: texture,
+    index: index
+  };
+}
 
 function makeZylinder(radius, length, latitudeBands) {
  radius = radius || 2;
