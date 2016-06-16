@@ -852,7 +852,7 @@ class LevelOfDetailSGNode extends SGNode {
 
     render(context) {
       let distance = getDistance([camera.position.x, camera.position.y, camera.position.z], this.position);  // calculate the distance between the camera and this object
-      
+
       if (distance > 10) {
         this.level0.render(context);
       } else if (distance > 5) {
@@ -869,7 +869,7 @@ class LevelOfDetailSGNode extends SGNode {
 // calculates the euclidian distance between two points
 function getDistance(pos1, pos2) {
     let vector = [pos2[0] - pos1[0], pos2[1] - pos1[1], pos2[2] - pos1[2]];
-    let distance = Math.sqrt(Math.pow(vector[0],2), Math.pow(vector[1],2), Math.pow(vector[2],2));
+    let distance = Math.sqrt(Math.pow(vector[0],2) + Math.pow(vector[1],2) + Math.pow(vector[2],2));
     return distance;
 }
 
