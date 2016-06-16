@@ -65,8 +65,6 @@ var cameraFlight = true;
 
 //load the required resources using a utility function
 loadResources({
-  vs_shadow: 'shader/shadow.vs.glsl',
-  fs_shadow: 'shader/shadow.fs.glsl',
   vs_env: 'shader/envmap.vs.glsl',
   fs_env: 'shader/envmap.fs.glsl',
   vs_texture: 'shader/texture.vs.glsl',
