@@ -93,7 +93,9 @@ loadResources({
   roof_texture: 'models/roof_bricks.jpg',
   roof_side_texture: 'models/roof_wood.jpg',
   wood_texture: 'models/wood.jpg',
-  door_texture: 'models/door.jpg'
+  door_texture: 'models/door.jpg',
+  floor_texture: 'models/floor.jpg',
+  ceiling_texture: 'models/ceiling.jpg'
 }).then(function (resources /*an object containing our keys with the loaded resources*/) {
   init(resources);
 
@@ -394,7 +396,7 @@ function createHouseLevel2(resources) {
   let doorlengthpos = length/2 - doorwidth/2;
   let basementheight = 1;
 
-  let house = new MaterialSGNode(new RenderSGNode(makeTrapeze(length,length,width,0))); // create ground plate
+  let house = new MaterialSGNode();
   let longwall = new TextureSGNode(resources.wall_texture, new RenderSGNode(makeTrapeze(length,length,wallheight,0)));
   let sidewall = new TextureSGNode(resources.wall_texture, new RenderSGNode(makeTrapeze(width,width,wallheight,0)));
   let frontwall = new TextureSGNode(resources.wall_texture, new RenderSGNode(makeTrapeze(windowlengthpos, windowlengthpos, wallheight)));
@@ -403,6 +405,8 @@ function createHouseLevel2(resources) {
   let roof = new TextureSGNode(resources.roof_texture, new RenderSGNode(makeTrapeze(length, length, roofwidth, 0)));
   let roofside = new TextureSGNode(resources.roof_side_texture, new RenderSGNode(makeRightTriangle(roofwidth, roofwidth)));
   let window = createWindow(resources, windowwidth, windowheight);
+  let floor = new TextureSGNode(resources.floor_texture, new RenderSGNode(makeTrapeze(length,length,width,0)));
+  let ceiling = new TextureSGNode(resources.ceiling_texture, new RenderSGNode(makeTrapeze(length,length,width,0)));
 
   // front wall (divided into pieces because of windows and door)
   frontwall.append(new TransformationSGNode(glm.translate(windowlengthpos,0,0), new RenderSGNode(makeTrapeze(windowwidth,windowwidth,windowheightpos))));
@@ -420,7 +424,8 @@ function createHouseLevel2(resources) {
   house.append(new TransformationSGNode(glm.translate(0,width,0),new TransformationSGNode(glm.rotateZ(270),new TransformationSGNode(glm.rotateX(90), sidewall))));
   house.append(new TransformationSGNode(glm.translate(length,0,0),new TransformationSGNode(glm.rotateZ(90),new TransformationSGNode(glm.rotateX(90), sidewall))));
   house.append(new TransformationSGNode(glm.translate(length,width,0),new TransformationSGNode(glm.rotateZ(180),new TransformationSGNode(glm.rotateX(90), longwall))));
-  house.append(new TransformationSGNode(glm.translate(0,0,wallheight), new RenderSGNode(makeTrapeze(length,length,width,0))));
+  house.append(new TransformationSGNode(glm.translate(0,0,wallheight), ceiling));
+  house.append(floor);
 
   // roof
   house.append(new TransformationSGNode(glm.translate(0,0,wallheight), new TransformationSGNode(glm.rotateX(45), roof)));
@@ -887,7 +892,7 @@ class LevelOfDetailSGNode extends SGNode {
     }
 }
 
-// calculates the euclidian distance between two points
+// calculates the euclidian distance between two points in 3D space
 function getDistance(pos1, pos2) {
     let vector = [pos2[0] - pos1[0], pos2[1] - pos1[1], pos2[2] - pos1[2]];
     let distance = Math.sqrt(Math.pow(vector[0],2) + Math.pow(vector[1],2) + Math.pow(vector[2],2));
