@@ -143,18 +143,10 @@ function createSceneGraph(gl, resources) {
   root.append(skybox);
 
   //creates sphere for light source to make it visible
-  function createLightSphere() {
+  function createLightSphere(rad) {
     return new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_light), [
 
-      new RenderSGNode(makeSphere(1.9,10,10)) // Parameters: radius, latitudeBands, longitudeBands (how round it is)
-    ]);
-  }
-
-
-  function createLampLightSphere() {
-    return new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_light), [
-
-      new RenderSGNode(makeSphere(0.2,10,10)) // Parameters: radius, latitudeBands, longitudeBands (how round it is)
+      new RenderSGNode(makeSphere(rad,10,10)) // Parameters: radius, latitudeBands, longitudeBands (how round it is)
     ]);
   }
 
@@ -203,21 +195,31 @@ function createSceneGraph(gl, resources) {
   translateSmokingDalek.append(new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_particle),smokeNode));
 
   // street lamps
-  let lamp1pos = [0, -(planetrad+0.9), 0];
-  let lampSpotLight = new SpotLightSGNode([0,0,0], [0, planetrad+0.9, 0], 0.866);
-  lampSpotLight.ambient = [0.0, 0.0, 0.0, 1];
-  lampSpotLight.diffuse = [0.4, 0.4, 0.4, 1];
-  lampSpotLight.specular = [0.2, 0.2, 0.2, 1];
-  lampSpotLight.uniform = 'u_light3';
-
+  let lampSpotLight1 = new SpotLightSGNode([0,0,0], [0, planetrad+0.9, 0], 0.94);
+  lampSpotLight1.ambient = [0.1, 0.1, 0.1, 1];
+  lampSpotLight1.diffuse = [0.5, 0.5, 0.5, 1];
+  lampSpotLight1.specular = [0.3, 0.3, 0.3, 1];
+  lampSpotLight1.uniform = 'u_light3';
 
   let lamp1 = createLamp();
-  lamp1.append(lampSpotLight);
-  lamp1.append(createLampLightSphere());
+  lamp1.append(lampSpotLight1);
+  lamp1.append(createLightSphere(0.2));
   lamp1 = new TransformationSGNode(glm.transform({ rotateX :3,rotateZ: -1}),new TransformationSGNode(glm.translate(0,-(planetrad+0.9),0), new TransformationSGNode(glm.rotateX(90),new TransformationSGNode(glm.scale(0.4,0.4,0.4),lamp1))));
   planetNode.append(lamp1);
 
-  planetNode.append(new TransformationSGNode(glm.transform({ rotateX :-2,rotateZ: -1}),new TransformationSGNode(glm.translate(0,-(planetrad+0.9),0), new TransformationSGNode(glm.rotateX(90),new TransformationSGNode(glm.scale(0.4,0.4,0.4),createLamp())))));
+  let lampSpotLight2 = new SpotLightSGNode([0,0,0], [0, planetrad+0.9, 0], 0.94);
+  lampSpotLight2.ambient = [0.1, 0.1, 0.1, 1];
+  lampSpotLight1.diffuse = [0.5, 0.5, 0.5, 1];
+  lampSpotLight1.specular = [0.3, 0.3, 0.3, 1];
+  lampSpotLight2.uniform = 'u_light4';
+
+  let lamp2 = createLamp();
+  lamp2.append(lampSpotLight2);
+  lamp2.append(createLightSphere(0.2));
+  lamp2 = new TransformationSGNode(glm.transform({ rotateX :-2,rotateZ: -1}),new TransformationSGNode(glm.translate(0,-(planetrad+0.9),0), new TransformationSGNode(glm.rotateX(90),new TransformationSGNode(glm.scale(0.4,0.4,0.4),lamp2))));
+  planetNode.append(lamp2);
+
+  //planetNode.append(new TransformationSGNode(glm.transform({ rotateX :-2,rotateZ: -1}),new TransformationSGNode(glm.translate(0,-(planetrad+0.9),0), new TransformationSGNode(glm.rotateX(90),new TransformationSGNode(glm.scale(0.4,0.4,0.4),createLamp())))));
 
   swingLamp = new TransformationSGNode(mat4.create(), createHouseLamp(resources));
   planetNode.append(new TransformationSGNode(glm.transform({translate: [1.6,-planetrad-0.35,-0.2], rotateX: 270, scale: scaleObjects}), swingLamp));
@@ -297,8 +299,8 @@ function createHouseLamp(resources){
   let lamp = new RenderSGNode(makeZylinder(0.01, 0.3,10));
   let lampLight = new LightSGNode();
   lampLight.ambient = [0.1, 0.1, 0.1, 1];
-  lampLight.diffuse = [1, 1, 1, 1];
-  lampLight.specular = [1, 1, 1, 1];
+  lampLight.diffuse = [0.7, 0.7, 0.7, 1];
+  lampLight.specular = [0.5, 0.5, 0.5, 1];
   lampLight.uniform = 'u_light5';
   let lampbulb = new TransformationSGNode(glm.translate(0,0,0.05),createLightSphere(0.04, resources));
   lampbulb.append(lampLight);
