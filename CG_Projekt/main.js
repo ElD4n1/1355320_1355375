@@ -193,7 +193,7 @@ function createSceneGraph(gl, resources) {
   }
 
   let dalek = createDalek();
-  let translateSmokingDalek = new TransformationSGNode(glm.transform({ translate: [1.3,-planetrad+0.01,-0.8], scale: scaleObjects*0.8 }));
+  let translateSmokingDalek = new TransformationSGNode(glm.transform({ translate: [1.3,-planetrad+0.01,-0.6], scale: scaleObjects*0.8 }));
   translateSmokingDalek.append(dalek);
   planetNode.append(translateSmokingDalek);
 
@@ -225,6 +225,15 @@ function createSceneGraph(gl, resources) {
   dalekout = new TransformationSGNode(mat4.create(), new TransformationSGNode(glm.transform({translate: [0,-planetrad, 0],scale:scaleObjects*0.8}),createDalek()));
   dalekout.append(new TransformationSGNode(glm.transform({translate: [0.3,-planetrad, -0.5],scale:scaleObjects*0.8}),createDalek()));
   dalekout.append(new TransformationSGNode(glm.transform({translate: [-0.3,-planetrad, -0.5],scale:scaleObjects*0.8}),createDalek()));
+
+  dalekout.append(new TransformationSGNode(glm.rotateX(30),new TransformationSGNode(glm.transform({translate: [0.3,-planetrad, -0.5],scale:scaleObjects*0.8}),createDalek())));
+  dalekout.append(new TransformationSGNode(glm.rotateX(30),new TransformationSGNode(glm.transform({translate: [-0.3,-planetrad, -0.5],scale:scaleObjects*0.8}),createDalek())));
+  dalekout.append(new TransformationSGNode(glm.rotateX(30),new TransformationSGNode(glm.transform({translate: [0,-planetrad, 0],scale:scaleObjects*0.8}),createDalek())));
+
+  dalekout.append(new TransformationSGNode(glm.rotateX(15),new TransformationSGNode(glm.transform({translate: [0,-planetrad, 0],scale:scaleObjects*0.8}),createDalek())));
+  dalekout.append(new TransformationSGNode(glm.rotateX(15),new TransformationSGNode(glm.transform({translate: [0.3,-planetrad, -0.5],scale:scaleObjects*0.8}),createDalek())));
+  dalekout.append(new TransformationSGNode(glm.rotateX(15),new TransformationSGNode(glm.transform({translate: [-0.3,-planetrad, -0.5],scale:scaleObjects*0.8}),createDalek())));
+
   planetNode.append(dalekout);
   //Dalek inside the house
   planetNode.append(new TransformationSGNode(glm.transform({translate:[1.8, -planetrad, -0.2], rotateY:220, scale: scaleObjects*0.8}), createDalek()));
@@ -811,7 +820,7 @@ function moveCamera(timeInMilliseconds){
     return;
   }
 
-  var t = timeInMilliseconds/1000+20;
+  var t = timeInMilliseconds/1000;
 
   if( t<14 ){
     //First scene. Tardis moves to planet.
@@ -838,18 +847,19 @@ function moveCamera(timeInMilliseconds){
   }
   if(t<30){
     closeDoor();
+    var x = t-21;
+    camera.position.x = 1-x*x*29/1800+x*341/1800;   //Turn in 7 seconds; divide by 7 *7 for normalization
+    camera.position.y = -20.16;
+    camera.position.z = -3/25 +x*x*17/1800-149/1800*x;                   //Go 1 forward in 7 seconds
 
-    camera.position.x = Math.sin(t/4);   //Turn in 7 seconds; divide by 7 *7 for normalization
-    camera.position.y = -17.5;
-    camera.position.z = 2-(t-14)/3.3;                   //Go 1 forward in 7 seconds
-
-    camera.direction.x = Math.sin((t-14) * Math.PI/14);  //Rotate 90 degrees in 7 seconds
-    camera.direction.z = - Math.cos((t-14) * Math.PI/19);
+    camera.direction.x = Math.sin((0.25+t/10)*Math.PI);  //Rotate 90 degrees in 7 seconds
+    camera.direction.z = - Math.cos((0.25+t/10)*Math.PI);
 
 
     camera.lookAt.x = camera.position.x + camera.direction.x;
     camera.lookAt.y = camera.position.y + camera.direction.y;
     camera.lookAt.z = camera.position.z + camera.direction.z;
+    return;
   }
 }
 
