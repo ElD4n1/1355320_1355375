@@ -315,14 +315,26 @@ function createDalek(){
 function createHouseLevel0() {
   let length = 6;
   let width = 3;
-  let height = 2;
+  let height = 3.5;
+  let wallheight = height/3.5 * 2;
+  let roofheight = height/3.5 * 1.5;
+  let roofwidth = Math.sqrt(Math.pow(roofheight,2) + Math.pow(width/2,2));
   let house = new MaterialSGNode(new RenderSGNode(makeTrapeze(length,length,width,0)));
+  let roof = new RenderSGNode(makeTrapeze(length, length, roofwidth, 0));
+  let roofside = new RenderSGNode(makeRightTriangle(roofwidth, roofwidth));
 
-  house.append(new TransformationSGNode(glm.rotateX(90), new RenderSGNode(makeTrapeze(length,length,height,0))));
-  house.append(new TransformationSGNode(glm.translate(0,width,0),new TransformationSGNode(glm.rotateZ(270),new TransformationSGNode(glm.rotateX(90), new RenderSGNode(makeTrapeze(width,width,height,0))))));
-  house.append(new TransformationSGNode(glm.translate(length,0,0),new TransformationSGNode(glm.rotateZ(90),new TransformationSGNode(glm.rotateX(90), new RenderSGNode(makeTrapeze(width,width,height,0))))));
-  house.append(new TransformationSGNode(glm.translate(length,width,0),new TransformationSGNode(glm.rotateZ(180),new TransformationSGNode(glm.rotateX(90), new RenderSGNode(makeTrapeze(length,length,height,0))))));
-  house.append(new TransformationSGNode(glm.translate(0,0,height), new RenderSGNode(makeTrapeze(length,length,width,0))));
+  // append walls
+  house.append(new TransformationSGNode(glm.rotateX(90), new RenderSGNode(makeTrapeze(length,length,wallheight,0))));
+  house.append(new TransformationSGNode(glm.translate(0,width,0),new TransformationSGNode(glm.rotateZ(270),new TransformationSGNode(glm.rotateX(90), new RenderSGNode(makeTrapeze(width,width,wallheight,0))))));
+  house.append(new TransformationSGNode(glm.translate(length,0,0),new TransformationSGNode(glm.rotateZ(90),new TransformationSGNode(glm.rotateX(90), new RenderSGNode(makeTrapeze(width,width,wallheight,0))))));
+  house.append(new TransformationSGNode(glm.translate(length,width,0),new TransformationSGNode(glm.rotateZ(180),new TransformationSGNode(glm.rotateX(90), new RenderSGNode(makeTrapeze(length,length,wallheight,0))))));
+  house.append(new TransformationSGNode(glm.translate(0,0,wallheight), new RenderSGNode(makeTrapeze(length,length,width,0))));
+
+  // append roof
+  house.append(new TransformationSGNode(glm.translate(0,0,wallheight), new TransformationSGNode(glm.rotateX(45), roof)));
+  house.append(new TransformationSGNode(glm.translate(0,width,wallheight), new TransformationSGNode(glm.rotateX(135), roof)));
+  house.append(new TransformationSGNode(glm.translate(0,width/2,height), new TransformationSGNode(glm.rotateX(225), new TransformationSGNode(glm.rotateY(270), roofside))));
+  house.append(new TransformationSGNode(glm.translate(length,width/2,height), new TransformationSGNode(glm.rotateX(315), new TransformationSGNode(glm.rotateY(90), roofside))));
 
   house.ambient = [0.05375, 0.05, 0.06625, 1];
   house.diffuse = [ 139/256, 105/256, 105/256, 1];
@@ -380,11 +392,14 @@ function createHouseLevel2(resources) {
   let doorwidth = 0.75;
   let doorheight = 1.5;
   let doorlengthpos = length/2 - doorwidth/2;
+  let basementheight = 1;
 
   let house = new MaterialSGNode(new RenderSGNode(makeTrapeze(length,length,width,0))); // create ground plate
   let longwall = new TextureSGNode(resources.wall_texture, new RenderSGNode(makeTrapeze(length,length,wallheight,0)));
   let sidewall = new TextureSGNode(resources.wall_texture, new RenderSGNode(makeTrapeze(width,width,wallheight,0)));
   let frontwall = new TextureSGNode(resources.wall_texture, new RenderSGNode(makeTrapeze(windowlengthpos, windowlengthpos, wallheight)));
+  let basementlong = new TextureSGNode(resources.wall_texture, new RenderSGNode(makeTrapeze(length,length,basementheight)));
+  let basementside = new TextureSGNode(resources.wall_texture, new RenderSGNode(makeTrapeze(width,width,basementheight)));
   let roof = new TextureSGNode(resources.roof_texture, new RenderSGNode(makeTrapeze(length, length, roofwidth, 0)));
   let roofside = new TextureSGNode(resources.roof_side_texture, new RenderSGNode(makeRightTriangle(roofwidth, roofwidth)));
   let window = createWindow(resources, windowwidth, windowheight);
@@ -412,6 +427,12 @@ function createHouseLevel2(resources) {
   house.append(new TransformationSGNode(glm.translate(0,width,wallheight), new TransformationSGNode(glm.rotateX(135), roof)));
   house.append(new TransformationSGNode(glm.translate(0,width/2,height), new TransformationSGNode(glm.rotateX(225), new TransformationSGNode(glm.rotateY(270), roofside))));
   house.append(new TransformationSGNode(glm.translate(length,width/2,height), new TransformationSGNode(glm.rotateX(315), new TransformationSGNode(glm.rotateY(90), roofside))));
+
+  // basement
+  house.append(new TransformationSGNode(glm.translate(0,0,-basementheight), new TransformationSGNode(glm.rotateX(90), basementlong)));
+  house.append(new TransformationSGNode(glm.translate(0,width,-basementheight),new TransformationSGNode(glm.rotateZ(270),new TransformationSGNode(glm.rotateX(90), basementside))));
+  house.append(new TransformationSGNode(glm.translate(length,0,-basementheight),new TransformationSGNode(glm.rotateZ(90),new TransformationSGNode(glm.rotateX(90), basementside))));
+  house.append(new TransformationSGNode(glm.translate(length,width,-basementheight),new TransformationSGNode(glm.rotateZ(180),new TransformationSGNode(glm.rotateX(90), basementlong))));
 
   // windows
   house.append(new TransformationSGNode(glm.translate(windowlengthpos,0,windowheightpos), new TransformationSGNode(glm.rotateX(90), window)));
