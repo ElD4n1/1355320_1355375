@@ -64,8 +64,6 @@ var cameraFlight = true;
 
 //load the required resources using a utility function
 loadResources({
-  vs_shadow: 'shader/shadow.vs.glsl',
-  fs_shadow: 'shader/shadow.fs.glsl',
   vs_env: 'shader/envmap.vs.glsl',
   fs_env: 'shader/envmap.fs.glsl',
   vs_texture: 'shader/texture.vs.glsl',
@@ -134,11 +132,18 @@ function createSceneGraph(gl, resources) {
                 ]);
   root.append(skybox);
 
-  //light debug helper function
+  //creates sphere for light source to make it visible
   function createLightSphere() {
     return new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_light), [
 
       new RenderSGNode(makeSphere(1.9,10,10)) // Parameters: radius, latitudeBands, longitudeBands (how round it is)
+    ]);
+  }
+
+  function createLampLightSphere() {
+    return new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_light), [
+
+      new RenderSGNode(makeSphere(0.2,10,10)) // Parameters: radius, latitudeBands, longitudeBands (how round it is)
     ]);
   }
 
@@ -155,7 +160,7 @@ function createSceneGraph(gl, resources) {
 
     orbitSun.append(translateLight);
     translateLight.append(lightNode);
-    translateLight.append(createLightSphere()); //add sphere for debugging: since we use 0,0,0 as our light position the sphere is at the same position as the light source
+    translateLight.append(createLightSphere());
     root.append(new TransformationSGNode(glm.rotateX(90),orbitSun));
   }
 
@@ -184,11 +189,22 @@ function createSceneGraph(gl, resources) {
 
 
   translateSmokingDalek.append(new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_particle),smokeNode));
-  planetNode.append(new TransformationSGNode(glm.transform({ rotateX :3,rotateZ: -1}),new TransformationSGNode(glm.translate(0,-(planetrad+0.9),0), new TransformationSGNode(glm.rotateX(90),new TransformationSGNode(glm.scale(0.4,0.4,0.4),createLamp())))));
+
+  // street lamps
+  let lamp1pos = [0, -(planetrad+0.9), 0];
+  let lampSpotLight = new SpotLightSGNode([0,0,0], [0, planetrad+0.9, 0], 0.866);
+  lampSpotLight.ambient = [0.0, 0.0, 0.0, 1];
+  lampSpotLight.diffuse = [0.4, 0.4, 0.4, 1];
+  lampSpotLight.specular = [0.2, 0.2, 0.2, 1];
+  lampSpotLight.uniform = 'u_light3';
+
+  let lamp1 = createLamp();
+  lamp1.append(lampSpotLight);
+  lamp1.append(createLampLightSphere());
+  lamp1 = new TransformationSGNode(glm.transform({ rotateX :3,rotateZ: -1}),new TransformationSGNode(glm.translate(0,-(planetrad+0.9),0), new TransformationSGNode(glm.rotateX(90),new TransformationSGNode(glm.scale(0.4,0.4,0.4),lamp1))));
+  planetNode.append(lamp1);
 
   planetNode.append(new TransformationSGNode(glm.transform({ rotateX :-2,rotateZ: -1}),new TransformationSGNode(glm.translate(0,-(planetrad+0.9),0), new TransformationSGNode(glm.rotateX(90),new TransformationSGNode(glm.scale(0.4,0.4,0.4),createLamp())))));
-
-  //planetNode.append(new TransformationSGNode(glm.rotateY(10),new TransformationSGNode(glm.translate(0,-(planetrad+2.4),0), new TransformationSGNode(glm.rotateX(90),createLamp()))));
 
   //house
   let level0 = createHouseLevel0(resources);
@@ -223,7 +239,7 @@ function createSceneGraph(gl, resources) {
 
     orbitMoon = new TransformationSGNode(mat4.create());
 
-    let moonLightNode = new LightSGNode(); //use now framework implementation of light node
+    let moonLightNode = new LightSGNode();
     moonLightNode.ambient = [0.0, 0.0, 0.0, 1];
     moonLightNode.diffuse = [0.4, 0.4, 0.4, 1];
     moonLightNode.specular = [0.2, 0.2, 0.2, 1];
@@ -890,6 +906,22 @@ class LevelOfDetailSGNode extends SGNode {
       // render children
       super.render(context);
     }
+}
+
+class SpotLightSGNode extends LightSGNode {
+  constructor(position, direction, cosCutoff, children) {
+    super(position, children);
+    this.direction = direction;
+    this.cosCutoff = cosCutoff;
+  }
+
+  render(context) {
+    // set additional uniforms
+    gl.uniform3fv(gl.getUniformLocation(context.shader, this.uniform+'.direction'), this.direction);
+    gl.uniform1f(gl.getUniformLocation(context.shader, this.uniform+'.cosCutoff'), this.cosCutoff);
+
+    super.render(context);
+  }
 }
 
 // calculates the euclidian distance between two points in 3D space
