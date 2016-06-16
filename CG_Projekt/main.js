@@ -174,25 +174,27 @@ function createSceneGraph(gl, resources) {
   }
 
   let dalek = createDalek();
-  let translateDalek = new TransformationSGNode(glm.transform({ translate: [0,-planetrad,0], scale: scaleObjects }));
-  translateDalek.append(dalek);
-  planetNode.append(translateDalek);
+  let translateSmokingDalek = new TransformationSGNode(glm.transform({ translate: [1.3,-planetrad+0.01,-0.8], scale: scaleObjects*0.8 }));
+  translateSmokingDalek.append(dalek);
+  planetNode.append(translateSmokingDalek);
 
   smokeNode = new TextureSGNode(resources.particle_texture) ;
 
 
-  translateDalek.append(new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_particle),smokeNode));
+  translateSmokingDalek.append(new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_particle),smokeNode));
   planetNode.append(new TransformationSGNode(glm.transform({ rotateX :3,rotateZ: -1}),new TransformationSGNode(glm.translate(0,-(planetrad+0.9),0), new TransformationSGNode(glm.rotateX(90),new TransformationSGNode(glm.scale(0.4,0.4,0.4),createLamp())))));
 
-  planetNode.append(new TransformationSGNode(glm.transform({ rotateX :-3,rotateZ: -1}),new TransformationSGNode(glm.translate(0,-(planetrad+0.9),0), new TransformationSGNode(glm.rotateX(90),new TransformationSGNode(glm.scale(0.4,0.4,0.4),createLamp())))));
+  planetNode.append(new TransformationSGNode(glm.transform({ rotateX :-2,rotateZ: -1}),new TransformationSGNode(glm.translate(0,-(planetrad+0.9),0), new TransformationSGNode(glm.rotateX(90),new TransformationSGNode(glm.scale(0.4,0.4,0.4),createLamp())))));
 
   //planetNode.append(new TransformationSGNode(glm.rotateY(10),new TransformationSGNode(glm.translate(0,-(planetrad+2.4),0), new TransformationSGNode(glm.rotateX(90),createLamp()))));
 
   //house
-  let level0 = new TransformationSGNode(glm.rotateZ(4), new TransformationSGNode(glm.transform({ rotateZ: -90, rotateX : 90, scale: scaleObjects }),createHouseLevel0(resources)));
-  let level1 = new TransformationSGNode(glm.rotateZ(4), new TransformationSGNode(glm.transform({ rotateZ: -90, rotateX : 90, scale: scaleObjects }),createHouseLevel1(resources)));
-  let level2 = new TransformationSGNode(glm.rotateZ(4), new TransformationSGNode(glm.transform({ rotateZ: -90, rotateX : 90, scale: scaleObjects }),createHouseLevel2(resources)));
-  planetNode.append(new LevelOfDetailSGNode([1, -(planetrad-0.02), 0.6], level0, level1, level2));
+  let level0 = createHouseLevel0(resources);
+  let level1 = createHouseLevel1(resources);
+  let level2 = createHouseLevel2(resources);
+  let housex = 5.5, housey = -planetrad+0.04, housez = -0;
+  let houseNode =new TransformationSGNode(glm.transform({ translate: [housex, housey, housez], rotateZ: 250, rotateX : 90, scale: scaleObjects }),new LevelOfDetailSGNode([housex, housey, housez], level0, level1, level2));
+  planetNode.append(houseNode);
 
 {
   //tardis
@@ -226,7 +228,7 @@ function createSceneGraph(gl, resources) {
     moonLightNode.position = [0, 0, 0];
     moonLightNode.uniform = 'u_light2';
 
-    let translateMoon = new TransformationSGNode(glm.translate(40,-5,-35));
+    let translateMoon = new TransformationSGNode(glm.translate(40,-10,-35));
     translateMoon.append(moonNode);
     translateMoon.append(moonLightNode);
     orbitMoon.append(translateMoon)
@@ -851,9 +853,9 @@ class LevelOfDetailSGNode extends SGNode {
     render(context) {
       let distance = getDistance([camera.position.x, camera.position.y, camera.position.z], this.position);  // calculate the distance between the camera and this object
 
-      if (distance > 10) {
+      if (distance > 20) {
         this.level0.render(context);
-      } else if (distance > 5) {
+      } else if (distance > 10) {
         this.level1.render(context);
       } else {
         this.level2.render(context);
