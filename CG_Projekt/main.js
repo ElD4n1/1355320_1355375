@@ -34,6 +34,7 @@ var orbitMoon;
 var translateTardis;
 var rotateTardis;
 var rotateDoor;
+var swingLamp;
 
 var smokeNode;
 var particles = [];
@@ -188,15 +189,17 @@ function createSceneGraph(gl, resources) {
 
   planetNode.append(new TransformationSGNode(glm.transform({ rotateX :-2,rotateZ: -1}),new TransformationSGNode(glm.translate(0,-(planetrad+0.9),0), new TransformationSGNode(glm.rotateX(90),new TransformationSGNode(glm.scale(0.4,0.4,0.4),createLamp())))));
 
-  //planetNode.append(new TransformationSGNode(glm.rotateY(10),new TransformationSGNode(glm.translate(0,-(planetrad+2.4),0), new TransformationSGNode(glm.rotateX(90),createLamp()))));
 
   //house
   let level0 = createHouseLevel0(resources);
   let level1 = createHouseLevel1(resources);
   let level2 = createHouseLevel2(resources);
   let housex = 5.5, housey = -planetrad+0.04, housez = -0;
-  let houseNode =new TransformationSGNode(glm.transform({ translate: [housex, housey, housez], rotateZ: 250, rotateX : 90, scale: scaleObjects }),new LevelOfDetailSGNode([housex, housey, housez], level0, level1, level2));
-  planetNode.append(houseNode);
+  let houseNode = new LevelOfDetailSGNode([housex, housey, housez], level0, level1, level2);
+  planetNode.append(new TransformationSGNode(glm.transform({ translate: [housex, housey, housez], rotateZ: 250, rotateX : 90, scale: scaleObjects }),houseNode));
+
+  swingLamp = new TransformationSGNode(mat4.create(), createHouseLamp());
+  planetNode.append(new TransformationSGNode(glm.transform({translate: [1.6,-planetrad-0.35,-0.1], rotateX: 270, scale: scaleObjects}), swingLamp));
 
 {
   //tardis
@@ -239,6 +242,12 @@ function createSceneGraph(gl, resources) {
 
 
   return root;
+}
+
+function createHouseLamp(){
+  let lamp = new RenderSGNode(makeZylinder(0.01, 0.3,10));
+  lamp.append(new TransformationSGNode(glm.transform({translate: [0,0,0.4], rotateX: 180}), new RenderSGNode(makeHalfSphere(0.1))));
+  return lamp;
 }
 
 function createLamp(){
@@ -737,7 +746,7 @@ function moveCamera(timeInMilliseconds){
     return;
   }
 
-  var t = timeInMilliseconds/1000;
+  var t = timeInMilliseconds/1000+13;
 
   if( t<14 ){
     //First scene. Tardis moves to planet.
@@ -747,8 +756,27 @@ function moveCamera(timeInMilliseconds){
     return;
   }
   if(t<21){
+    openDoor();
 
+    camera.position.x = ((t-14) * (t-14))/49;   //Turn in 7 seconds; divide by 7 *7 for normalization
+    camera.position.y = -20.5 + (t-14)/21;
+    camera.position.z = 2-(t-14)/3.3;                   //Go 1 forward in 7 seconds
+
+    camera.direction.x = Math.sin((t-14) * Math.PI/14);  //Rotate 90 degrees in 7 seconds
+    camera.direction.z = - Math.cos((t-14) * Math.PI/19);
+
+
+    camera.lookAt.x = camera.position.x + camera.direction.x;
+    camera.lookAt.y = camera.position.y + camera.direction.y;
+    camera.lookAt.z = camera.position.z + camera.direction.z;
+    return;
   }
+}
+
+function swingLampFunc(timeInMilliseconds){
+  var t = timeInMilliseconds /1000;
+
+  swingLamp.matrix = glm.rotateX(20*Math.cos(t));
 }
 
 function render(timeInMilliseconds) {
@@ -763,6 +791,7 @@ function render(timeInMilliseconds) {
   //Rotates sun and moon around the planet
   orbitSun.matrix = glm.rotateY(timeInMilliseconds*0.005);
   orbitMoon.matrix = glm.rotateY(timeInMilliseconds*-0.001);
+  swingLampFunc(timeInMilliseconds);
 
   lastrendertime = timeInMilliseconds;
   if (isOpenDoor) {
