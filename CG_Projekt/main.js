@@ -88,7 +88,7 @@ loadResources({
   tardis_front: 'models/Tardis/TARDIS_FRONT.jpg',
   tardis_side: 'models/Tardis/TARDIS_SIDE.jpg',
   particle_texture: 'models/particleTexture.png',
-  sun_texture: 'models/sun.jpg',
+  lamp_texture: 'models/lamp.png',
 
   wall_texture: 'models/wall_bricks.jpg',
   roof_texture: 'models/roof_bricks.jpg',
@@ -122,6 +122,13 @@ gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
   initInteraction(gl.canvas);
 }
 
+function createLightSphere(rad, resources) {
+  return new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_light), [
+
+    new RenderSGNode(makeSphere(rad,10,10)) // Parameters: radius, latitudeBands, longitudeBands (how round it is)
+  ]);
+}
+
 function createSceneGraph(gl, resources) {
   //create scenegraph
   const root = new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_texture));
@@ -136,12 +143,7 @@ function createSceneGraph(gl, resources) {
   root.append(skybox);
 
   //light debug helper function
-  function createLightSphere() {
-    return new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_light), [
 
-      new RenderSGNode(makeSphere(1.9,10,10)) // Parameters: radius, latitudeBands, longitudeBands (how round it is)
-    ]);
-  }
 
   {
     //initialize light
@@ -156,7 +158,7 @@ function createSceneGraph(gl, resources) {
 
     orbitSun.append(translateLight);
     translateLight.append(lightNode);
-    translateLight.append(createLightSphere()); //add sphere for debugging: since we use 0,0,0 as our light position the sphere is at the same position as the light source
+    translateLight.append(createLightSphere(1.9, resources)); //add sphere for debugging: since we use 0,0,0 as our light position the sphere is at the same position as the light source
     root.append(new TransformationSGNode(glm.rotateX(90),orbitSun));
   }
 
@@ -189,6 +191,9 @@ function createSceneGraph(gl, resources) {
 
   planetNode.append(new TransformationSGNode(glm.transform({ rotateX :-2,rotateZ: -1}),new TransformationSGNode(glm.translate(0,-(planetrad+0.9),0), new TransformationSGNode(glm.rotateX(90),new TransformationSGNode(glm.scale(0.4,0.4,0.4),createLamp())))));
 
+  swingLamp = new TransformationSGNode(mat4.create(), createHouseLamp(resources));
+  planetNode.append(new TransformationSGNode(glm.transform({translate: [1.6,-planetrad-0.35,-0.2], rotateX: 270, scale: scaleObjects}), swingLamp));
+
 
   //house
   let level0 = createHouseLevel0(resources);
@@ -198,8 +203,6 @@ function createSceneGraph(gl, resources) {
   let houseNode = new LevelOfDetailSGNode([housex, housey, housez], level0, level1, level2);
   planetNode.append(new TransformationSGNode(glm.transform({ translate: [housex, housey, housez], rotateZ: 250, rotateX : 90, scale: scaleObjects }),houseNode));
 
-  swingLamp = new TransformationSGNode(mat4.create(), createHouseLamp());
-  planetNode.append(new TransformationSGNode(glm.transform({translate: [1.6,-planetrad-0.35,-0.1], rotateX: 270, scale: scaleObjects}), swingLamp));
 
 {
   //tardis
@@ -244,9 +247,17 @@ function createSceneGraph(gl, resources) {
   return root;
 }
 
-function createHouseLamp(){
+function createHouseLamp(resources){
   let lamp = new RenderSGNode(makeZylinder(0.01, 0.3,10));
-  lamp.append(new TransformationSGNode(glm.transform({translate: [0,0,0.4], rotateX: 180}), new RenderSGNode(makeHalfSphere(0.1))));
+  let lampLight = new LightSGNode();
+  lampLight.ambient = [0.1, 0.1, 0.1, 1];
+  lampLight.diffuse = [1, 1, 1, 1];
+  lampLight.specular = [1, 1, 1, 1];
+  lampLight.uniform = 'u_light3';
+  let lampbulb = new TransformationSGNode(glm.translate(0,0,0.05),createLightSphere(0.04, resources));
+  lampbulb.append(lampLight);
+  lamp.append(new TransformationSGNode(glm.transform({translate: [0,0,0.4], rotateX: 180}),
+  new TextureSGNode(resources.lamp_texture,  [new RenderSGNode(makeHalfSphere(0.1)),lampbulb])));
   return lamp;
 }
 
