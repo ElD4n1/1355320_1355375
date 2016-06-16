@@ -1026,7 +1026,7 @@ function initInteraction(canvas) {
     mouse.leftButtonDown = false;
   });
   //register globally
-  document.addEventListener('keypress', function(event) {
+  document.addEventListener('keydown', function(event) {
     //https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent
     if (event.code === 'KeyR') {
       //stop cameraFlight
@@ -1046,7 +1046,7 @@ function initInteraction(canvas) {
       camera.lookAt.x = 0;
       camera.lookAt.y = -20.5;
       camera.lookAt.z = -1;
-    } else if (event.code === 'KeyW') {
+    } else if (event.code === 'KeyW' || event.keyCode == 38) {
       let speed = 0.1;
 
       //stop cameraFlight
@@ -1059,7 +1059,7 @@ function initInteraction(canvas) {
       camera.lookAt.x = camera.position.x + camera.direction.x;
       camera.lookAt.y = camera.position.y + camera.direction.y;
       camera.lookAt.z = camera.position.z + camera.direction.z;
-   } else if (event.code === 'KeyS') {
+   } else if (event.code === 'KeyS' || event.keyCode == 40) {
      let speed = 0.1;
 
      //stop cameraFlight
