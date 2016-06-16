@@ -142,8 +142,21 @@ function createSceneGraph(gl, resources) {
                 ]);
   root.append(skybox);
 
-  //light debug helper function
+  //creates sphere for light source to make it visible
+  function createLightSphere() {
+    return new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_light), [
 
+      new RenderSGNode(makeSphere(1.9,10,10)) // Parameters: radius, latitudeBands, longitudeBands (how round it is)
+    ]);
+  }
+
+
+  function createLampLightSphere() {
+    return new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_light), [
+
+      new RenderSGNode(makeSphere(0.2,10,10)) // Parameters: radius, latitudeBands, longitudeBands (how round it is)
+    ]);
+  }
 
   {
     //initialize light
@@ -158,7 +171,8 @@ function createSceneGraph(gl, resources) {
 
     orbitSun.append(translateLight);
     translateLight.append(lightNode);
-    translateLight.append(createLightSphere(1.9, resources)); //add sphere for debugging: since we use 0,0,0 as our light position the sphere is at the same position as the light source
+    translateLight.append(createLightSphere(1.9, resources));
+
     root.append(new TransformationSGNode(glm.rotateX(90),orbitSun));
   }
 
@@ -187,7 +201,21 @@ function createSceneGraph(gl, resources) {
 
 
   translateSmokingDalek.append(new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_particle),smokeNode));
-  planetNode.append(new TransformationSGNode(glm.transform({ rotateX :3,rotateZ: -1}),new TransformationSGNode(glm.translate(0,-(planetrad+0.9),0), new TransformationSGNode(glm.rotateX(90),new TransformationSGNode(glm.scale(0.4,0.4,0.4),createLamp())))));
+
+  // street lamps
+  let lamp1pos = [0, -(planetrad+0.9), 0];
+  let lampSpotLight = new SpotLightSGNode([0,0,0], [0, planetrad+0.9, 0], 0.866);
+  lampSpotLight.ambient = [0.0, 0.0, 0.0, 1];
+  lampSpotLight.diffuse = [0.4, 0.4, 0.4, 1];
+  lampSpotLight.specular = [0.2, 0.2, 0.2, 1];
+  lampSpotLight.uniform = 'u_light3';
+
+
+  let lamp1 = createLamp();
+  lamp1.append(lampSpotLight);
+  lamp1.append(createLampLightSphere());
+  lamp1 = new TransformationSGNode(glm.transform({ rotateX :3,rotateZ: -1}),new TransformationSGNode(glm.translate(0,-(planetrad+0.9),0), new TransformationSGNode(glm.rotateX(90),new TransformationSGNode(glm.scale(0.4,0.4,0.4),lamp1))));
+  planetNode.append(lamp1);
 
   planetNode.append(new TransformationSGNode(glm.transform({ rotateX :-2,rotateZ: -1}),new TransformationSGNode(glm.translate(0,-(planetrad+0.9),0), new TransformationSGNode(glm.rotateX(90),new TransformationSGNode(glm.scale(0.4,0.4,0.4),createLamp())))));
 
@@ -201,6 +229,7 @@ function createSceneGraph(gl, resources) {
   //Dalek inside the house
   planetNode.append(new TransformationSGNode(glm.transform({translate:[1.8, -planetrad, -0.2], rotateY:220, scale: scaleObjects*0.8}), createDalek()));
   planetNode.append(new TransformationSGNode(glm.transform({translate:[1.6, -planetrad, 0.2], rotateY:180, scale: scaleObjects*0.8}), createDalek()));
+
 
 
   //house
@@ -237,7 +266,7 @@ function createSceneGraph(gl, resources) {
 
     orbitMoon = new TransformationSGNode(mat4.create());
 
-    let moonLightNode = new LightSGNode(); //use now framework implementation of light node
+    let moonLightNode = new LightSGNode();
     moonLightNode.ambient = [0.0, 0.0, 0.0, 1];
     moonLightNode.diffuse = [0.4, 0.4, 0.4, 1];
     moonLightNode.specular = [0.2, 0.2, 0.2, 1];
@@ -261,7 +290,7 @@ function createHouseLamp(resources){
   lampLight.ambient = [0.1, 0.1, 0.1, 1];
   lampLight.diffuse = [1, 1, 1, 1];
   lampLight.specular = [1, 1, 1, 1];
-  lampLight.uniform = 'u_light3';
+  lampLight.uniform = 'u_light5';
   let lampbulb = new TransformationSGNode(glm.translate(0,0,0.05),createLightSphere(0.04, resources));
   lampbulb.append(lampLight);
   lamp.append(new TransformationSGNode(glm.transform({translate: [0,0,0.4], rotateX: 180}),
@@ -970,6 +999,22 @@ class LevelOfDetailSGNode extends SGNode {
       // render children
       super.render(context);
     }
+}
+
+class SpotLightSGNode extends LightSGNode {
+  constructor(position, direction, cosCutoff, children) {
+    super(position, children);
+    this.direction = direction;
+    this.cosCutoff = cosCutoff;
+  }
+
+  render(context) {
+    // set additional uniforms
+    gl.uniform3fv(gl.getUniformLocation(context.shader, this.uniform+'.direction'), this.direction);
+    gl.uniform1f(gl.getUniformLocation(context.shader, this.uniform+'.cosCutoff'), this.cosCutoff);
+
+    super.render(context);
+  }
 }
 
 // calculates the euclidian distance between two points in 3D space
