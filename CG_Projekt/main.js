@@ -182,17 +182,17 @@ function createSceneGraph(gl, resources) {
 
 
   translateDalek.append(new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_particle),smokeNode));
-  planetNode.append(new TransformationSGNode(glm.transform({ rotateX :3,rotateZ: -1}),new TransformationSGNode(glm.translate(0,-(planetrad+1),0), new TransformationSGNode(glm.rotateX(90),new TransformationSGNode(glm.scale(0.4,0.4,0.4),createLamp())))));
+  planetNode.append(new TransformationSGNode(glm.transform({ rotateX :3,rotateZ: -1}),new TransformationSGNode(glm.translate(0,-(planetrad+0.9),0), new TransformationSGNode(glm.rotateX(90),new TransformationSGNode(glm.scale(0.4,0.4,0.4),createLamp())))));
 
-  planetNode.append(new TransformationSGNode(glm.transform({ rotateX :-3,rotateZ: -1}),new TransformationSGNode(glm.translate(0,-(planetrad+1),0), new TransformationSGNode(glm.rotateX(90),new TransformationSGNode(glm.scale(0.4,0.4,0.4),createLamp())))));
+  planetNode.append(new TransformationSGNode(glm.transform({ rotateX :-3,rotateZ: -1}),new TransformationSGNode(glm.translate(0,-(planetrad+0.9),0), new TransformationSGNode(glm.rotateX(90),new TransformationSGNode(glm.scale(0.4,0.4,0.4),createLamp())))));
 
-  planetNode.append(new TransformationSGNode(glm.rotateY(10),new TransformationSGNode(glm.translate(0,-(planetrad+2.4),0), new TransformationSGNode(glm.rotateX(90),createLamp()))));
+  //planetNode.append(new TransformationSGNode(glm.rotateY(10),new TransformationSGNode(glm.translate(0,-(planetrad+2.4),0), new TransformationSGNode(glm.rotateX(90),createLamp()))));
 
   //house
-  let level0 = new TransformationSGNode(glm.rotateZ(4), new TransformationSGNode(glm.transform({ rotateZ: 90, rotateX : 90, scale: scaleObjects }),createHouseLevel0(resources)));
-  let level1 = new TransformationSGNode(glm.rotateZ(4), new TransformationSGNode(glm.transform({ rotateZ: 90, rotateX : 90, scale: scaleObjects }),createHouseLevel1(resources)));
-  let level2 = new TransformationSGNode(glm.rotateZ(4), new TransformationSGNode(glm.transform({ rotateZ: 90, rotateX : 90, scale: scaleObjects }),createHouseLevel2(resources)));
-  planetNode.append(new LevelOfDetailSGNode([0, -planetrad, 0], level0, level1, level2));
+  let level0 = new TransformationSGNode(glm.rotateZ(4), new TransformationSGNode(glm.transform({ rotateZ: -90, rotateX : 90, scale: scaleObjects }),createHouseLevel0(resources)));
+  let level1 = new TransformationSGNode(glm.rotateZ(4), new TransformationSGNode(glm.transform({ rotateZ: -90, rotateX : 90, scale: scaleObjects }),createHouseLevel1(resources)));
+  let level2 = new TransformationSGNode(glm.rotateZ(4), new TransformationSGNode(glm.transform({ rotateZ: -90, rotateX : 90, scale: scaleObjects }),createHouseLevel2(resources)));
+  planetNode.append(new LevelOfDetailSGNode([1, -(planetrad-0.02), 0.6], level0, level1, level2));
 
 {
   //tardis
@@ -661,7 +661,7 @@ function animateDoorOpen(timeInMilliseconds) {
 
   if(angle >= 135 || ((timeInMilliseconds - doorAnimationStartTime)*0.05 / 136) >= 1) {
     isOpenDoor = false;
-    return;
+    angle = 135;
   }
 
   rotateDoor.matrix = glm.rotateZ(angle);
@@ -681,7 +681,7 @@ function animateDoorClose(timeInMilliseconds) {
 
   if(angle <= 0 || ((timeInMilliseconds - doorAnimationStartTime)*0.05 / 136) >= 1) {
     isCloseDoor = false;
-    return;
+    angle = 0;
   }
 
   rotateDoor.matrix = glm.rotateZ(angle);
@@ -735,8 +735,6 @@ function render(timeInMilliseconds) {
   //Rotates sun and moon around the planet
   orbitSun.matrix = glm.rotateY(timeInMilliseconds*0.005);
   orbitMoon.matrix = glm.rotateY(timeInMilliseconds*-0.001);
-
-  rotateTardis.matrix = glm.rotateY(timeInMilliseconds*0.1);
 
   lastrendertime = timeInMilliseconds;
   if (isOpenDoor) {
