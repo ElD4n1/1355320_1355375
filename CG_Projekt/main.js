@@ -34,6 +34,9 @@ var orbitMoon;
 var translateTardis;
 var rotateTardis;
 var rotateDoor;
+var swingLamp;
+var rotateDalekHead = [];
+var dalekout;
 
 var smokeNode;
 var particles = [];
@@ -85,7 +88,7 @@ loadResources({
   tardis_front: 'models/Tardis/TARDIS_FRONT.jpg',
   tardis_side: 'models/Tardis/TARDIS_SIDE.jpg',
   particle_texture: 'models/particleTexture.png',
-  sun_texture: 'models/sun.jpg',
+  lamp_texture: 'models/lamp.png',
 
   wall_texture: 'models/wall_bricks.jpg',
   roof_texture: 'models/roof_bricks.jpg',
@@ -119,6 +122,13 @@ gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
   initInteraction(gl.canvas);
 }
 
+function createLightSphere(rad, resources) {
+  return new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_light), [
+
+    new RenderSGNode(makeSphere(rad,10,10)) // Parameters: radius, latitudeBands, longitudeBands (how round it is)
+  ]);
+}
+
 function createSceneGraph(gl, resources) {
   //create scenegraph
   const root = new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_texture));
@@ -140,6 +150,7 @@ function createSceneGraph(gl, resources) {
     ]);
   }
 
+
   function createLampLightSphere() {
     return new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_light), [
 
@@ -160,7 +171,8 @@ function createSceneGraph(gl, resources) {
 
     orbitSun.append(translateLight);
     translateLight.append(lightNode);
-    translateLight.append(createLightSphere());
+    translateLight.append(createLightSphere(1.9, resources));
+
     root.append(new TransformationSGNode(glm.rotateX(90),orbitSun));
   }
 
@@ -198,6 +210,7 @@ function createSceneGraph(gl, resources) {
   lampSpotLight.specular = [0.2, 0.2, 0.2, 1];
   lampSpotLight.uniform = 'u_light3';
 
+
   let lamp1 = createLamp();
   lamp1.append(lampSpotLight);
   lamp1.append(createLampLightSphere());
@@ -206,13 +219,27 @@ function createSceneGraph(gl, resources) {
 
   planetNode.append(new TransformationSGNode(glm.transform({ rotateX :-2,rotateZ: -1}),new TransformationSGNode(glm.translate(0,-(planetrad+0.9),0), new TransformationSGNode(glm.rotateX(90),new TransformationSGNode(glm.scale(0.4,0.4,0.4),createLamp())))));
 
+  swingLamp = new TransformationSGNode(mat4.create(), createHouseLamp(resources));
+  planetNode.append(new TransformationSGNode(glm.transform({translate: [1.6,-planetrad-0.35,-0.2], rotateX: 270, scale: scaleObjects}), swingLamp));
+  //Daleks patroling around planet
+  dalekout = new TransformationSGNode(mat4.create(), new TransformationSGNode(glm.transform({translate: [0,-planetrad, 0],scale:scaleObjects*0.8}),createDalek()));
+  dalekout.append(new TransformationSGNode(glm.transform({translate: [0.3,-planetrad, -0.5],scale:scaleObjects*0.8}),createDalek()));
+  dalekout.append(new TransformationSGNode(glm.transform({translate: [-0.3,-planetrad, -0.5],scale:scaleObjects*0.8}),createDalek()));
+  planetNode.append(dalekout);
+  //Dalek inside the house
+  planetNode.append(new TransformationSGNode(glm.transform({translate:[1.8, -planetrad, -0.2], rotateY:220, scale: scaleObjects*0.8}), createDalek()));
+  planetNode.append(new TransformationSGNode(glm.transform({translate:[1.6, -planetrad, 0.2], rotateY:180, scale: scaleObjects*0.8}), createDalek()));
+
+
+
   //house
   let level0 = createHouseLevel0(resources);
   let level1 = createHouseLevel1(resources);
   let level2 = createHouseLevel2(resources);
   let housex = 5.5, housey = -planetrad+0.04, housez = -0;
-  let houseNode =new TransformationSGNode(glm.transform({ translate: [housex, housey, housez], rotateZ: 250, rotateX : 90, scale: scaleObjects }),new LevelOfDetailSGNode([housex, housey, housez], level0, level1, level2));
-  planetNode.append(houseNode);
+  let houseNode = new LevelOfDetailSGNode([housex, housey, housez], level0, level1, level2);
+  planetNode.append(new TransformationSGNode(glm.transform({ translate: [housex, housey, housez], rotateZ: 250, rotateX : 90, scale: scaleObjects }),houseNode));
+
 
 {
   //tardis
@@ -257,6 +284,20 @@ function createSceneGraph(gl, resources) {
   return root;
 }
 
+function createHouseLamp(resources){
+  let lamp = new RenderSGNode(makeZylinder(0.01, 0.3,10));
+  let lampLight = new LightSGNode();
+  lampLight.ambient = [0.1, 0.1, 0.1, 1];
+  lampLight.diffuse = [1, 1, 1, 1];
+  lampLight.specular = [1, 1, 1, 1];
+  lampLight.uniform = 'u_light5';
+  let lampbulb = new TransformationSGNode(glm.translate(0,0,0.05),createLightSphere(0.04, resources));
+  lampbulb.append(lampLight);
+  lamp.append(new TransformationSGNode(glm.transform({translate: [0,0,0.4], rotateX: 180}),
+  new TextureSGNode(resources.lamp_texture,  [new RenderSGNode(makeHalfSphere(0.1)),lampbulb])));
+  return lamp;
+}
+
 function createLamp(){
   let lamp = new RenderSGNode(makeHalfSphere(0.3, 10, 10));
   lamp.append(new TransformationSGNode(glm.rotateY(-45), new TransformationSGNode(glm.translate(0,0,0.29), new RenderSGNode(makeZylinder(0.05, 0.5,10)))));
@@ -276,23 +317,25 @@ function createLamp(){
 // Returns a Dalek node
 function createDalek(){
   let dalek = new TransformationSGNode(mat4.create(),new TransformationSGNode(glm.translate(1,0,0),new TransformationSGNode(glm.rotateY(180),new RenderSGNode(makeTrapeze(1,1,0.2,0)))));
+  //bottom
   dalek.append(new TransformationSGNode(glm.translate(0, 0,1.2), new RenderSGNode(makeTrapeze(1,1,0.2,0))));
   dalek.append(new TransformationSGNode(glm.rotateY(270), new RenderSGNode(makeTrapeze(1.2,1.2,0.2,0))));
   dalek.append(new TransformationSGNode(glm.translate(1, 0,1.2), new TransformationSGNode(glm.rotateY(90), new RenderSGNode(makeTrapeze(1.2,1.2,0.2,0)))));
   dalek.append(new TransformationSGNode(glm.translate(0, 0.2,1.2), new TransformationSGNode(glm.rotateX(270), new RenderSGNode(makeTrapeze(1,1,1.2,0)))));
 
+  //top
   dalek.append(new TransformationSGNode(glm.translate(0.8, -0.9,0.2), new TransformationSGNode(glm.rotateY(180),new RenderSGNode(makeTrapeze(0.6,0.6,0.25,0)))));
   dalek.append(new TransformationSGNode(glm.translate(0.2, -0.9,0.8), new RenderSGNode(makeTrapeze(0.6,0.6,0.25,0))));
   dalek.append(new TransformationSGNode(glm.translate(0.2, -0.9,0.2), new TransformationSGNode(glm.rotateY(270), new RenderSGNode(makeTrapeze(0.6,0.6,0.25,0)))));
   dalek.append(new TransformationSGNode(glm.translate(0.8, -0.9,0.8), new TransformationSGNode(glm.rotateY(90), new RenderSGNode(makeTrapeze(0.6,0.6,0.25,0)))));
   dalek.append(new TransformationSGNode(glm.translate(0.2, -0.9,0.2), new TransformationSGNode(glm.rotateX(90), new RenderSGNode(makeTrapeze(0.6,0.6,0.6,0)))));
-
+  //sides
   dalek.append(new TransformationSGNode(glm.translate(0,0,1.2), new TransformationSGNode(glm.rotateY(90),new TransformationSGNode(glm.rotateX(163), new RenderSGNode(makeTrapeze(1.2,0.6,0.7,0.4))))));
   dalek.append(new TransformationSGNode(glm.translate(1,0,0),new TransformationSGNode(glm.rotateY(270),new TransformationSGNode(glm.rotateX(163),new RenderSGNode(makeTrapeze(1.2,0.6,0.7,0.2))))));
   dalek.append(new TransformationSGNode(glm.rotateX(163), new RenderSGNode(makeTrapeze(1,0.6,0.7,0.2)))); //Backside
   dalek.append(new TransformationSGNode(glm.translate(1,0,1.2),new TransformationSGNode(glm.rotateX(211),new TransformationSGNode(glm.rotateY(180),new RenderSGNode(makeTrapeze(1,0.6,0.8,0.2))))));
   dalek.append(new TransformationSGNode(glm.translate(0.5,-0.9,0.5),new RenderSGNode(makeSphere(0.3,15,15))));
-//Spheres on body
+  //Spheres on body
   dalek.append(new TransformationSGNode(glm.translate(0.2,-0.5,0.3),new RenderSGNode(makeSphere(0.1,10,10))));
   dalek.append(new TransformationSGNode(glm.translate(0.2,-0.5,0.6),new RenderSGNode(makeSphere(0.1,10,10))));
   dalek.append(new TransformationSGNode(glm.translate(0.1,-0.2,0.3),new RenderSGNode(makeSphere(0.1,10,10))));
@@ -311,14 +354,18 @@ function createDalek(){
   dalek.append(new TransformationSGNode(glm.translate(0.67,-0.5,0.85),new RenderSGNode(makeSphere(0.1,10,10))));
   dalek.append(new TransformationSGNode(glm.translate(0.33,-0.2,1.05),new RenderSGNode(makeSphere(0.1,10,10))));
   dalek.append(new TransformationSGNode(glm.translate(0.67,-0.2,1.05),new RenderSGNode(makeSphere(0.1,10,10))));
-
+  //head and arms
   dalek.append(new TransformationSGNode(glm.translate(0.33,-0.8,0.8),new RenderSGNode(makeZylinder(0.02,0.5,10))));
   dalek.append(new TransformationSGNode(glm.translate(0.33,-0.8,0.8),new RenderSGNode(makeSphere(0.04,10,10))));
   dalek.append(new TransformationSGNode(glm.translate(0.67,-0.8,0.8),new RenderSGNode(makeZylinder(0.02,0.4,10))));
   dalek.append(new TransformationSGNode(glm.translate(0.67,-0.8,0.8),new RenderSGNode(makeSphere(0.04,10,10))));
   dalek.append(new TransformationSGNode(glm.translate(0.67,-0.8,1.245),new TransformationSGNode(glm.rotateX(180),new RenderSGNode(makeHalfSphere(0.05,10,10)))));
-  dalek.append(new TransformationSGNode(glm.translate(0.5,-1,0.75),new RenderSGNode(makeZylinder(0.025,0.2,10))));
-  dalek.append(new TransformationSGNode(glm.translate(0.5,-1,0.93),new RenderSGNode(makeSphere(0.04,10,10))));
+  let dalekHead = new TransformationSGNode(mat4.create(),[new RenderSGNode(makeZylinder(0.025,0.2,10)),
+                                        new TransformationSGNode(glm.translate(0,0,0.18), new RenderSGNode(makeSphere(0.04,10,10)))
+                                      ]);
+  rotateDalekHead.push(dalekHead);
+
+  dalek.append(new TransformationSGNode(glm.translate(0.5,-1,0.75),dalekHead));
 
   dalek = new MaterialSGNode(dalek);
 
@@ -748,12 +795,23 @@ function moveTardis(timeInMilliseconds){
   }
 }
 
+function moveDaleks(timeInMilliseconds){
+  var t = timeInMilliseconds/1000+13;
+
+  dalekout.matrix = glm.rotateX(30-1.5*t);
+  var index;
+  //Start index with one so the smoking dalek does not move its eye
+  for(index =1;index<rotateDalekHead.length;index++){
+    rotateDalekHead[index].matrix = glm.rotateY(30*Math.sin(t));
+  }
+}
+
 function moveCamera(timeInMilliseconds){
   if(!cameraFlight){
     return;
   }
 
-  var t = timeInMilliseconds/1000;
+  var t = timeInMilliseconds/1000+20;
 
   if( t<14 ){
     //First scene. Tardis moves to planet.
@@ -763,8 +821,42 @@ function moveCamera(timeInMilliseconds){
     return;
   }
   if(t<21){
+    openDoor();
 
+    camera.position.x = ((t-14) * (t-14))/49;   //Turn in 7 seconds; divide by 7 *7 for normalization
+    camera.position.y = -20.5 + (t-14)/21;
+    camera.position.z = 2-(t-14)/3.3;                   //Go 1 forward in 7 seconds
+
+    camera.direction.x = Math.sin((t-14) * Math.PI/14);  //Rotate 90 degrees in 7 seconds
+    camera.direction.z = - Math.cos((t-14) * Math.PI/19);
+
+
+    camera.lookAt.x = camera.position.x + camera.direction.x;
+    camera.lookAt.y = camera.position.y + camera.direction.y;
+    camera.lookAt.z = camera.position.z + camera.direction.z;
+    return;
   }
+  if(t<30){
+    closeDoor();
+
+    camera.position.x = Math.sin(t/4);   //Turn in 7 seconds; divide by 7 *7 for normalization
+    camera.position.y = -17.5;
+    camera.position.z = 2-(t-14)/3.3;                   //Go 1 forward in 7 seconds
+
+    camera.direction.x = Math.sin((t-14) * Math.PI/14);  //Rotate 90 degrees in 7 seconds
+    camera.direction.z = - Math.cos((t-14) * Math.PI/19);
+
+
+    camera.lookAt.x = camera.position.x + camera.direction.x;
+    camera.lookAt.y = camera.position.y + camera.direction.y;
+    camera.lookAt.z = camera.position.z + camera.direction.z;
+  }
+}
+
+function swingLampFunc(timeInMilliseconds){
+  var t = timeInMilliseconds /1000;
+
+  swingLamp.matrix = glm.rotateX(20*Math.cos(t));
 }
 
 function render(timeInMilliseconds) {
@@ -774,11 +866,12 @@ function render(timeInMilliseconds) {
   makeSmoke(timeInMilliseconds);
 
   moveTardis(timeInMilliseconds);
-
+  moveDaleks(timeInMilliseconds);
   moveCamera(timeInMilliseconds);
   //Rotates sun and moon around the planet
   orbitSun.matrix = glm.rotateY(timeInMilliseconds*0.005);
   orbitMoon.matrix = glm.rotateY(timeInMilliseconds*-0.001);
+  swingLampFunc(timeInMilliseconds);
 
   lastrendertime = timeInMilliseconds;
   if (isOpenDoor) {
@@ -978,7 +1071,7 @@ function initInteraction(canvas) {
     mouse.leftButtonDown = false;
   });
   //register globally
-  document.addEventListener('keypress', function(event) {
+  document.addEventListener('keydown', function(event) {
     //https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent
     if (event.code === 'KeyR') {
       //stop cameraFlight
@@ -998,7 +1091,7 @@ function initInteraction(canvas) {
       camera.lookAt.x = 0;
       camera.lookAt.y = -20.5;
       camera.lookAt.z = -1;
-    } else if (event.code === 'KeyW') {
+    } else if (event.code === 'KeyW' || event.keyCode == 38) {
       let speed = 0.1;
 
       //stop cameraFlight
@@ -1011,7 +1104,7 @@ function initInteraction(canvas) {
       camera.lookAt.x = camera.position.x + camera.direction.x;
       camera.lookAt.y = camera.position.y + camera.direction.y;
       camera.lookAt.z = camera.position.z + camera.direction.z;
-   } else if (event.code === 'KeyS') {
+   } else if (event.code === 'KeyS' || event.keyCode == 40) {
      let speed = 0.1;
 
      //stop cameraFlight
