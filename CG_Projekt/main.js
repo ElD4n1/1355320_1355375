@@ -37,12 +37,19 @@ var rotateDoor;
 var swingLamp;
 var rotateDalekHead = [];
 var dalekout;
-
 var smokeNode;
 var particles = [];
 var paritcleNodes = [];
 
-// animation variables
+
+// animation variables tardis
+var tardispos;
+var tardislanded = false;
+var tardisstarttime =-1.0;
+var startTardis = false;
+
+// animation variables door
+var doorPosition = [1.1, -20.16,-0.2];
 var isDoorOpening = false;
 var isDoorOpen = false;
 var isDoorClosing = false;
@@ -61,7 +68,7 @@ const framebufferWidth = 1024;
 const framebufferHeight = 1024;
 
 const planetrad = 20;
-const numberOfParticels = 1000;
+const numberOfParticels = 500;
 const particleLifeTime =2000;
 const scaleObjects = 0.2;
 
@@ -244,8 +251,27 @@ function createSceneGraph(gl, resources) {
   planetNode.append(new TransformationSGNode(glm.transform({translate:[1.6, -planetrad, 0.2], rotateY:180, scale: scaleObjects*0.8}), createDalek()));
 
 
+  {
+    //tardis
+    let tardis = new MaterialSGNode(
+              new TextureSGNode(resources.tardis_bottom,
+              new RenderSGNode(makeRect(0.5,0.5))
+    ));
+    tardis.append(new TransformationSGNode(glm.translate(-0.5,-0.5,0),new TransformationSGNode(glm.rotateX(90), new TextureSGNode(resources.tardis_front, new RenderSGNode(makeTrapeze(1,1,2,0))))));
+    tardis.append(new TransformationSGNode(glm.translate(-0.5,0.5,0),new TransformationSGNode(glm.rotateZ(270),new TransformationSGNode(glm.rotateX(90), new TextureSGNode(resources.tardis_side, new RenderSGNode(makeTrapeze(1,1,2,0)))))));
+    tardis.append(new TransformationSGNode(glm.translate(0.5,-0.5,0),new TransformationSGNode(glm.rotateZ(90),new TransformationSGNode(glm.rotateX(90), new TextureSGNode(resources.tardis_side, new RenderSGNode(makeTrapeze(1,1,2,0)))))));
+    tardis.append(new TransformationSGNode(glm.translate(0.5,0.5,0),new TransformationSGNode(glm.rotateZ(180),new TransformationSGNode(glm.rotateX(90), new TextureSGNode(resources.tardis_side, new RenderSGNode(makeTrapeze(1,1,2,0)))))));
+    tardis.append(new TransformationSGNode(glm.translate(0,0,2), new TextureSGNode(resources.tardis_top, new RenderSGNode(makeRect(0.5,0.5)))));
+    rotateTardis = new TransformationSGNode(mat4.create(), new TransformationSGNode(glm.rotateX(90),tardis));
+    translateTardis =new TransformationSGNode(glm.translate(-0.25,-19.5,39.5),new TransformationSGNode(glm.scale(scaleObjects,scaleObjects,scaleObjects), rotateTardis));
+
+    tardis.shininess = 0;
+
+    planetNode.append(translateTardis);
+  }
 
   //house
+  //must be last because of tranparenzy
   let level0 = createHouseLevel0(resources);
   let level1 = createHouseLevel1(resources);
   let level2 = createHouseLevel2(resources);
@@ -254,24 +280,6 @@ function createSceneGraph(gl, resources) {
   planetNode.append(new TransformationSGNode(glm.transform({ translate: [housex, housey, housez], rotateZ: 250, rotateX : 90, scale: scaleObjects }),houseNode));
 
 
-{
-  //tardis
-  let tardis = new MaterialSGNode(
-            new TextureSGNode(resources.tardis_bottom,
-            new RenderSGNode(makeRect(0.5,0.5))
-  ));
-  tardis.append(new TransformationSGNode(glm.translate(-0.5,-0.5,0),new TransformationSGNode(glm.rotateX(90), new TextureSGNode(resources.tardis_front, new RenderSGNode(makeTrapeze(1,1,2,0))))));
-  tardis.append(new TransformationSGNode(glm.translate(-0.5,0.5,0),new TransformationSGNode(glm.rotateZ(270),new TransformationSGNode(glm.rotateX(90), new TextureSGNode(resources.tardis_side, new RenderSGNode(makeTrapeze(1,1,2,0)))))));
-  tardis.append(new TransformationSGNode(glm.translate(0.5,-0.5,0),new TransformationSGNode(glm.rotateZ(90),new TransformationSGNode(glm.rotateX(90), new TextureSGNode(resources.tardis_side, new RenderSGNode(makeTrapeze(1,1,2,0)))))));
-  tardis.append(new TransformationSGNode(glm.translate(0.5,0.5,0),new TransformationSGNode(glm.rotateZ(180),new TransformationSGNode(glm.rotateX(90), new TextureSGNode(resources.tardis_side, new RenderSGNode(makeTrapeze(1,1,2,0)))))));
-  tardis.append(new TransformationSGNode(glm.translate(0,0,2), new TextureSGNode(resources.tardis_top, new RenderSGNode(makeRect(0.5,0.5)))));
-  rotateTardis = new TransformationSGNode(mat4.create(), new TransformationSGNode(glm.rotateX(90),tardis));
-  translateTardis =new TransformationSGNode(glm.translate(-0.25,-19.5,39.5),new TransformationSGNode(glm.scale(scaleObjects,scaleObjects,scaleObjects), rotateTardis));
-
-  tardis.shininess = 0;
-
-  planetNode.append(translateTardis);
-}
 {
     let moonNode = new TextureSGNode(resources.moon_texture,
                       new RenderSGNode(makeSphere(3,10,10)));
@@ -791,21 +799,91 @@ function animateDoorClose(timeInMilliseconds) {
   rotateDoor.matrix = glm.rotateZ(angle);
 }
 
-function moveTardis(timeInMilliseconds){
+function triggerMovement(timeInMilliseconds){
   var x ;
   var y ;
   var z ;
   var t = timeInMilliseconds/1000;
 
-  if(t <= 14){
+  if(cameraFlight){
+    return;
+  }
+  if(closeToTardis()){
+    startTardis = true;
+  }
+  if(startTardis){
+    if(!tardislanded){
+      if(tardisstarttime ==-1.0){
+        tardisstarttime = t;
+      }
+      let dt=14-(t-tardisstarttime);
+      x = -0.3- Math.cos(dt);
+      y = -planetrad;
+      z = 18.8 * Math.cos(dt * Math.PI/14) +20.0;
+    } else {
+      if(tardisstarttime ==-1.0){
+        tardisstarttime = t;        // store time when animation started
+      }
+      let dt=(t-tardisstarttime);
+      x = -0.3- Math.cos(dt);
+      y = -planetrad;
+      z = 18.8 * Math.cos(dt * Math.PI/14) +20.0;
+    }
+  //  console.log("Move Tardis: startTardis="+startTardis + ", t-tardisstarttime="+(t-tardisstarttime) + ", x,y,z=" +x+","+y+","+z);
+
+    if((t-tardisstarttime)>=13.9){
+      tardislanded = !tardislanded;     //mark tardis as flying in space
+      tardisstarttime = -1.0;   //set starttime to unset
+      startTardis = false;      //stop movement of tardis
+      console.log("Stop tardis on planet");
+    }
+    rotateTardis.matrix = glm.rotateY(timeInMilliseconds*0.1);
+    tardispos = [x,y,z];
+    translateTardis.matrix = glm.translate(x,y,z);
+  }
+
+  if(closeToDoor()){
+    //open door to enter
+    openDoor();
+  } else {
+    closeDoor();
+  }
+}
+function closeToDoor(){
+  let distance = getDistance([camera.position.x, camera.position.y, camera.position.z], doorPosition);  // calculate the distance between the camera and the tardis
+
+  return distance < 0.3;
+}
+
+
+function closeToTardis(){
+  let distance = getDistance([camera.position.x, camera.position.y, camera.position.z], tardispos);  // calculate the distance between the camera and the tardis
+
+  return distance < 1;
+
+}
+
+function moveTardis(timeInMilliseconds){
+  var x ;
+  var y ;
+  var z ;
+  var t = timeInMilliseconds/1000;  //Time in seconds
+
+
+  if(t <= 14 ){
     //First scene. Tardis moves to planet.
-    x = - Math.cos(t);
+    x = - 0.3- Math.cos(t);
     y = -planetrad;
     z = 18.8 * Math.cos(t * Math.PI/14) +20.0;
     rotateTardis.matrix = glm.rotateY(timeInMilliseconds*0.1);
-
+    tardispos = [x,y,z];
     translateTardis.matrix = glm.translate(x,y,z);
+    if(z==1.2){
+      tardislanded = true;
+    }
   }
+
+
 }
 
 function moveDaleks(timeInMilliseconds){
@@ -870,6 +948,7 @@ function moveCamera(timeInMilliseconds){
     camera.lookAt.z = camera.position.z + camera.direction.z;
     return;
   }
+  cameraFlight = false; // cameraFlight ends after 30 seconds
 }
 
 function swingLampFunc(timeInMilliseconds){
@@ -887,6 +966,10 @@ function render(timeInMilliseconds) {
   moveTardis(timeInMilliseconds);
   moveDaleks(timeInMilliseconds);
   moveCamera(timeInMilliseconds);
+
+
+  triggerMovement(timeInMilliseconds);
+
   //Rotates sun and moon around the planet
   orbitSun.matrix = glm.rotateY(timeInMilliseconds*0.005);
   orbitMoon.matrix = glm.rotateY(timeInMilliseconds*-0.001);
