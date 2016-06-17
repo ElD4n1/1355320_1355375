@@ -11,6 +11,7 @@ const camera = {
     y: -20.5,
     z:40
   },
+  //Vector from direction from cameraposition to lookAt
   direction: {
     x: 0,
     y: 0,
@@ -27,18 +28,22 @@ const camera = {
 var root = null;
 var lightNode;
 var translateLight;
+// Nodes for orbiting sun and moon around the planet
+var orbitMoon;
 var orbitSun;
 var planetNode;
 var translatePlanet;
-var orbitMoon;
 var translateTardis;
 var rotateTardis;
 var rotateDoor;
 var swingLamp;
+// Array of all heads of the daleks. Rotate all heads togehter
 var rotateDalekHead = [];
 var dalekout;
 var smokeNode;
+//The particle objects to update the positions
 var particles = [];
+// particle SceneGraph nodes for rendering
 var paritcleNodes = [];
 
 
@@ -59,19 +64,16 @@ var lastrendertime = 0;
 
 //textures
 var envcubetexture;
-var renderTargetColorTexture;
-var renderTargetDepthTexture;
 
-//framebuffer variables
-var renderTargetFramebuffer;
-const framebufferWidth = 1024;
-const framebufferHeight = 1024;
-
+// radius of planet. used for for positioning object
 const planetrad = 20;
+// constans for particle System
 const numberOfParticels = 1000;
 const particleLifeTime =2000;
+// Factor for scaling the scenegraphnodes like daleks, house and tardis
 const scaleObjects = 0.2;
 
+// marks if the cameraFlight is still in progress
 var cameraFlight = true;
 
 //load the required resources using a utility function
@@ -99,7 +101,7 @@ loadResources({
   particle_texture: 'models/particleTexture.png',
   lamp_texture: 'models/lamp.png',
   stop_texture: 'models/stop.png',
-
+  // house textures
   wall_texture: 'models/wall_bricks.jpg',
   roof_texture: 'models/roof_bricks.jpg',
   roof_side_texture: 'models/roof_wood.jpg',
@@ -117,24 +119,22 @@ function init(resources) {
   //create a GL context
   gl = createContext(400, 400);
 
-
   initCubeMap(resources);
 
+  // enables z-buffer and alpha blending for transparenzy
   gl.enable(gl.DEPTH_TEST);
   gl.enable(gl.BLEND);
-gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
   //create scenegraph
   root = createSceneGraph(gl, resources);
-
-  //create scenegraph without floor and simple shader
 
   initInteraction(gl.canvas);
 }
 
 function createLightSphere(rad, resources) {
   return new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_light), [
-
+    //render with light fragment shader to make it bright.
     new RenderSGNode(makeSphere(rad,10,10)) // Parameters: radius, latitudeBands, longitudeBands (how round it is)
   ]);
 }
@@ -143,22 +143,12 @@ function createSceneGraph(gl, resources) {
   //create scenegraph
   const root = new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_texture));
 
-
-
-  //add skybox by putting large sphere around us
+  //add skybox by putting large sphere around the scene
   var skybox =  new ShaderSGNode(createProgram(gl, resources.vs_env, resources.fs_env),[
                 new EnvironmentSGNode(envcubetexture,4,false,
                   new RenderSGNode(makeSphere(60)))
                 ]);
   root.append(skybox);
-
-  //creates sphere for light source to make it visible
-  function createLightSphere(rad) {
-    return new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_light), [
-
-      new RenderSGNode(makeSphere(rad,10,10)) // Parameters: radius, latitudeBands, longitudeBands (how round it is)
-    ]);
-  }
 
   {
     //initialize light
@@ -167,14 +157,15 @@ function createSceneGraph(gl, resources) {
     lightNode.diffuse = [1, 1, 1, 1];
     lightNode.specular = [1, 1, 1, 1];
 
+    // TransomationNode to rotate sun
     orbitSun = new TransformationSGNode(mat4.create());
-    translateLight = new TransformationSGNode(glm.translate(-52,-5,20)); //translating the light is the same as setting the light position
-    //let sunNode = new TextureSGNode(resources.sun_texture, new RenderSGNode(makeSphere(1)));
+    translateLight = new TransformationSGNode(glm.translate(-52,-5,20));
+    //translating the light is the same as setting the light position
 
     orbitSun.append(translateLight);
     translateLight.append(lightNode);
+    // create a lightsphere to make the sun visible
     translateLight.append(createLightSphere(1.9, resources));
-
     root.append(new TransformationSGNode(glm.rotateX(90),orbitSun));
   }
 
@@ -193,12 +184,11 @@ function createSceneGraph(gl, resources) {
 
     root.append(planetNode);
   }
-
+  // Create a dalek with smok for particle system.
   let dalek = createDalek();
   let translateSmokingDalek = new TransformationSGNode(glm.transform({ translate: [1.3,-planetrad+0.01,-0.6], scale: scaleObjects*0.8 }));
   translateSmokingDalek.append(dalek);
   planetNode.append(translateSmokingDalek);
-
   smokeNode = new TextureSGNode(resources.particle_texture) ;
 
 
@@ -213,7 +203,7 @@ function createSceneGraph(gl, resources) {
 
   let lamp1 = createLamp();
   lamp1.append(lampSpotLight1);
-  lamp1.append(createLightSphere(0.2));
+  lamp1.append(createLightSphere(0.2, resources));
   lamp1 = new TransformationSGNode(glm.transform({ rotateX :3,rotateZ: -1}),new TransformationSGNode(glm.translate(0,-(planetrad+0.9),0), new TransformationSGNode(glm.rotateX(90),new TransformationSGNode(glm.scale(0.4,0.4,0.4),lamp1))));
   planetNode.append(lamp1);
 
@@ -225,7 +215,7 @@ function createSceneGraph(gl, resources) {
 
   let lamp2 = createLamp();
   lamp2.append(lampSpotLight2);
-  lamp2.append(createLightSphere(0.2));
+  lamp2.append(createLightSphere(0.2, resources));
   lamp2 = new TransformationSGNode(glm.transform({ rotateX :-2,rotateZ: -1}),new TransformationSGNode(glm.translate(0,-(planetrad+0.9),0), new TransformationSGNode(glm.rotateX(90),new TransformationSGNode(glm.scale(0.4,0.4,0.4),lamp2))));
   planetNode.append(lamp2);
 
@@ -275,7 +265,7 @@ function createSceneGraph(gl, resources) {
     //stop sign
     let stopsign = new TransformationSGNode(glm.rotateX(90), new RenderSGNode(makeZylinder(0.005,0.3,30)));
     stopsign.append(new TransformationSGNode(glm.transform({translate:[0.05,0,0.3], rotateY: 180, rotateX:90}),new TextureSGNode(resources.stop_texture, new RenderSGNode(makeOctagon(0.1,0.1)))));
-    planetNode.append(new TransformationSGNode(glm.transform({rotateX:-3, rotateZ: -1}),new TransformationSGNode(glm.translate(0,-planetrad,0),stopsign)));
+    planetNode.append(new TransformationSGNode(glm.transform({rotateX:-3, rotateZ: -1}),new TransformationSGNode(glm.translate(0,-planetrad+0.1,0),stopsign)));
   }
 
   //house
@@ -845,7 +835,7 @@ function triggerMovement(timeInMilliseconds){
       }
       let dt=14-(t-tardisstarttime);
       x = -0.3- Math.cos(dt);
-      y = -planetrad;
+      y = -planetrad+0.1;
       z = 18.8 * Math.cos(dt * Math.PI/14) +20.0;
     } else {
       if(tardisstarttime ==-1.0){
@@ -853,7 +843,7 @@ function triggerMovement(timeInMilliseconds){
       }
       let dt=(t-tardisstarttime);
       x = -0.3- Math.cos(dt);
-      y = -planetrad;
+      y = -planetrad+0.1;
       z = 18.8 * Math.cos(dt * Math.PI/14) +20.0;
     }
   //  console.log("Move Tardis: startTardis="+startTardis + ", t-tardisstarttime="+(t-tardisstarttime) + ", x,y,z=" +x+","+y+","+z);
@@ -900,7 +890,7 @@ function moveTardis(timeInMilliseconds){
   if(t <= 14 ){
     //First scene. Tardis moves to planet.
     x = - 0.3- Math.cos(t);
-    y = -planetrad;
+    y = -planetrad+0.1;
     z = 18.8 * Math.cos(t * Math.PI/14) +20.0;
     rotateTardis.matrix = glm.rotateY(timeInMilliseconds*0.1);
     tardispos = [x,y,z];
