@@ -43,8 +43,10 @@ var particles = [];
 var paritcleNodes = [];
 
 // animation variables
-var isOpenDoor = false;
-var isCloseDoor = false;
+var isDoorOpening = false;
+var isDoorOpen = false;
+var isDoorClosing = false;
+var isDoorClosed = true;
 var doorAnimationStartTime;
 var lastrendertime = 0;
 
@@ -750,19 +752,19 @@ function makeSmoke(timeInMilliseconds){
 }
 
 function openDoor() {
-  if (isCloseDoor) {
-    isCloseDoor = false;
+  if (!isDoorOpening && !isDoorOpen) {  // cannot open the door if the door is already open(ed)
+    doorAnimationStartTime = lastrendertime;
+    isDoorOpening = true;
   }
-
-  doorAnimationStartTime = lastrendertime;
-  isOpenDoor = true;
 }
 
 function animateDoorOpen(timeInMilliseconds) {
   let angle = (timeInMilliseconds - doorAnimationStartTime)*0.05 % 136;
 
   if(angle >= 135 || ((timeInMilliseconds - doorAnimationStartTime)*0.05 / 136) >= 1) {
-    isOpenDoor = false;
+    isDoorOpening = false;
+    isDoorOpen = true;
+    isDoorClosed = false;
     angle = 135;
   }
 
@@ -770,19 +772,19 @@ function animateDoorOpen(timeInMilliseconds) {
 }
 
 function closeDoor() {
-  if (isOpenDoor) {
-    isOpenDoor = false;
+  if (!isDoorClosing && !isDoorClosed) {  // cannot close the door if the dorr is already closed
+    doorAnimationStartTime = lastrendertime;
+    isDoorClosing = true;
   }
-
-  doorAnimationStartTime = lastrendertime;
-  isCloseDoor = true;
 }
 
 function animateDoorClose(timeInMilliseconds) {
   let angle = 136 - (timeInMilliseconds - doorAnimationStartTime)*0.05 % 136;
 
   if(angle <= 0 || ((timeInMilliseconds - doorAnimationStartTime)*0.05 / 136) >= 1) {
-    isCloseDoor = false;
+    isDoorClosing = false;
+    isDoorClosed = true;
+    isDoorOpen = false;
     angle = 0;
   }
 
@@ -832,7 +834,9 @@ function moveCamera(timeInMilliseconds){
     return;
   }
   if(t<21){
-    openDoor();
+    if(t>20) {
+      openDoor();
+    }
 
     camera.position.x = ((t-14) * (t-14))/49;   //Turn in 7 seconds; divide by 7 *7 for normalization
     camera.position.y = -20.5 + (t-14)/21;
@@ -848,7 +852,10 @@ function moveCamera(timeInMilliseconds){
     return;
   }
   if(t<30){
-    closeDoor();
+    if(t>29) {
+      closeDoor();
+    }
+
     var x = t-21;
     camera.position.x = 1-x*x*29/1800+x*341/1800;   //Turn in 7 seconds; divide by 7 *7 for normalization
     camera.position.y = -20.16;
@@ -886,9 +893,9 @@ function render(timeInMilliseconds) {
   swingLampFunc(timeInMilliseconds);
 
   lastrendertime = timeInMilliseconds;
-  if (isOpenDoor) {
+  if (isDoorOpening) {
     animateDoorOpen(timeInMilliseconds);
-  } else if (isCloseDoor) {
+  } else if (isDoorClosing) {
     animateDoorClose(timeInMilliseconds);
   }
 
