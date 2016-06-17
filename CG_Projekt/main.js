@@ -68,7 +68,7 @@ const framebufferWidth = 1024;
 const framebufferHeight = 1024;
 
 const planetrad = 20;
-const numberOfParticels = 500;
+const numberOfParticels = 1000;
 const particleLifeTime =2000;
 const scaleObjects = 0.2;
 
@@ -98,6 +98,7 @@ loadResources({
   tardis_side: 'models/Tardis/TARDIS_SIDE.jpg',
   particle_texture: 'models/particleTexture.png',
   lamp_texture: 'models/lamp.png',
+  stop_texture: 'models/stop.png',
 
   wall_texture: 'models/wall_bricks.jpg',
   roof_texture: 'models/roof_bricks.jpg',
@@ -268,6 +269,13 @@ function createSceneGraph(gl, resources) {
     tardis.shininess = 0;
 
     planetNode.append(translateTardis);
+  }
+
+  {
+    //stop sign
+    let stopsign = new TransformationSGNode(glm.rotateX(90), new RenderSGNode(makeZylinder(0.005,0.3,30)));
+    stopsign.append(new TransformationSGNode(glm.transform({translate:[0.05,0,0.3], rotateY: 180, rotateX:90}),new TextureSGNode(resources.stop_texture, new RenderSGNode(makeOctagon(0.1,0.1)))));
+    planetNode.append(new TransformationSGNode(glm.transform({rotateX:-3, rotateZ: -1}),new TransformationSGNode(glm.translate(0,-planetrad,0),stopsign)));
   }
 
   //house
@@ -575,6 +583,25 @@ function makeTrapeze(length, width, height, offset) {
   var normal = [0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1];
   var texture = [0, 0 /**/, 1, 0 /**/, 1, 1 /**/, 0, 1];
   var index = [0, 1, 2, 2, 3, 0];
+  return {
+    position: position,
+    normal: normal,
+    texture: texture,
+    index: index
+  };
+}
+
+function makeOctagon(height, width) {
+  width = width || 1;
+  height = height || 1;
+
+  var position = [width/3,0 , 0, width*2/3, 0, 0,
+              width, height/3, 0, width, height*2/3, 0,
+            width*2/3, height, 0, width/3, height, 0,
+          0, height*2/3, 0, 0, height/3, 0];
+  var normal = [0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1];
+  var texture = [1/3, 0, 2/3, 0, 1, 1/3, 1, 2/3,2/3,1,1/3,1,0,2/3,0,1/3];
+  var index = [0,1,2, 0,2,3, 0,3,4, 0,4,5, 0,5,6, 0,6,7];
   return {
     position: position,
     normal: normal,
