@@ -479,10 +479,10 @@ function createHouseLevel2(resources) {
 
   let house = new MaterialSGNode();
   let longwall = new TextureSGNode(resources.wall_texture, new RenderSGNode(makeTrapeze(length,length,wallheight,0)));
-  let sidewall = new TextureSGNode(resources.wall_texture, new RenderSGNode(makeTrapeze(width,width,wallheight,0)));
-  let frontwall = new TextureSGNode(resources.wall_texture, new RenderSGNode(makeTrapeze(windowlengthpos, windowlengthpos, wallheight)));
-  let basementlong = new TextureSGNode(resources.wall_texture, new RenderSGNode(makeTrapeze(length,length,basementheight)));
-  let basementside = new TextureSGNode(resources.wall_texture, new RenderSGNode(makeTrapeze(width,width,basementheight)));
+  let sidewall = new TextureSGNode(resources.wall_texture, new RenderSGNode(makeTrapeze(width,width,wallheight,0, calcTextureCoordinates(length, wallheight, 0, width, 0, wallheight))));//[0, 0 /**/, width/length, 0 /**/, width/length, 1 /**/, 0, 1])));
+  let frontwall = new TextureSGNode(resources.wall_texture, new RenderSGNode(makeTrapeze(windowlengthpos, windowlengthpos, wallheight,0, calcTextureCoordinates(length, wallheight, 0, windowlengthpos, 0, wallheight))));
+  let basementlong = new TextureSGNode(resources.wall_texture, new RenderSGNode(makeTrapeze(length,length,basementheight,0, calcTextureCoordinates(length, wallheight, 0, length, 0, basementheight))));//[0, 0 /**/, 1, 0 /**/, 1, basementheight/wallheight /**/, 0, basementheight/wallheight])));
+  let basementside = new TextureSGNode(resources.wall_texture, new RenderSGNode(makeTrapeze(width,width,basementheight,0, calcTextureCoordinates(length, wallheight, 0, width, 0, basementheight))));//[0, 0 /**/, width/length, 0 /**/, width/length, basementheight/wallheight /**/, 0, basementheight/wallheight])));
   let roof = new TextureSGNode(resources.roof_texture, new RenderSGNode(makeTrapeze(length, length, roofwidth, 0)));
   let roofside = new TextureSGNode(resources.roof_side_texture, new RenderSGNode(makeRightTriangle(roofwidth, roofwidth)));
   let window = createWindow(resources, windowwidth, windowheight);
@@ -490,15 +490,14 @@ function createHouseLevel2(resources) {
   let ceiling = new TextureSGNode(resources.ceiling_texture, new RenderSGNode(makeTrapeze(length,length,width,0)));
 
   // front wall (divided into pieces because of windows and door)
-  frontwall.append(new TransformationSGNode(glm.translate(windowlengthpos,0,0), new RenderSGNode(makeTrapeze(windowwidth,windowwidth,windowheightpos))));
-  frontwall.append(new TransformationSGNode(glm.translate(windowlengthpos,windowheightpos+windowheight,0), new RenderSGNode(makeTrapeze(windowwidth,windowwidth,wallheight-windowheightpos-windowheight))));
-  frontwall.append(new TransformationSGNode(glm.translate(windowlengthpos+windowwidth,0,0), new RenderSGNode(makeTrapeze(doorlengthpos - windowlengthpos - windowwidth,doorlengthpos - windowlengthpos - windowwidth,wallheight))));
-  frontwall.append(new TransformationSGNode(glm.translate(windowlengthpos+windowwidth,0,0), new RenderSGNode(makeTrapeze(doorlengthpos - windowlengthpos - windowwidth,doorlengthpos - windowlengthpos - windowwidth,wallheight))));
-  frontwall.append(new TransformationSGNode(glm.translate(doorlengthpos,doorheight,0), new RenderSGNode(makeTrapeze(doorwidth,doorwidth,wallheight - doorheight))));
-  frontwall.append(new TransformationSGNode(glm.translate(doorlengthpos + doorwidth,0,0), new RenderSGNode(makeTrapeze(doorlengthpos - windowlengthpos - windowwidth,doorlengthpos - windowlengthpos - windowwidth,wallheight))));
-  frontwall.append(new TransformationSGNode(glm.translate(length - windowlengthpos - windowwidth,windowheightpos+windowheight,0), new RenderSGNode(makeTrapeze(windowwidth,windowwidth,wallheight-windowheightpos-windowheight))));
-  frontwall.append(new TransformationSGNode(glm.translate(length - windowlengthpos - windowwidth,0,0), new RenderSGNode(makeTrapeze(windowwidth,windowwidth,windowheightpos))));
-  frontwall.append(new TransformationSGNode(glm.translate(length - windowlengthpos,0,0), new RenderSGNode(makeTrapeze(windowlengthpos,windowlengthpos,wallheight))));
+  frontwall.append(createFrontwallPiece(length, wallheight, windowwidth, windowheightpos, windowlengthpos, 0)); // below left window
+  frontwall.append(createFrontwallPiece(length, wallheight, windowwidth, wallheight-windowheightpos-windowheight, windowlengthpos, windowheightpos+windowheight)); // above left window
+  frontwall.append(createFrontwallPiece(length, wallheight, doorlengthpos-windowlengthpos-windowwidth, wallheight, windowlengthpos+windowwidth, 0));  // left the door
+  frontwall.append(createFrontwallPiece(length, wallheight, doorwidth, wallheight-doorheight, doorlengthpos, doorheight));  // above the door
+  frontwall.append(createFrontwallPiece(length, wallheight, doorlengthpos-windowlengthpos-windowwidth, wallheight, doorlengthpos+doorwidth, 0));  // right the door
+  frontwall.append(createFrontwallPiece(length, wallheight, windowwidth, wallheight-windowheightpos-windowheight, length-windowlengthpos-windowwidth, windowheightpos+windowheight));  // above right window
+  frontwall.append(createFrontwallPiece(length, wallheight, windowwidth, windowheightpos, length-windowlengthpos-windowwidth, 0)); // below right window
+  frontwall.append(createFrontwallPiece(length, wallheight, windowlengthpos, wallheight, length-windowlengthpos, 0)); // right the right window
 
   // walls
   house.append(new TransformationSGNode(glm.rotateX(90), frontwall));
@@ -536,6 +535,16 @@ function createHouseLevel2(resources) {
   return house;
 }
 
+// creates a piece of the front wall with correct position relative to front wall and adjusted texture coordinates
+function createFrontwallPiece(fullwalllength, fullwallheight, piecewidth, pieceheight, lengthpos, heightpos) {
+  return new TransformationSGNode(glm.translate(lengthpos,heightpos,0), new RenderSGNode(makeTrapeze(piecewidth,piecewidth,pieceheight,0, calcTextureCoordinates(fullwalllength, fullwallheight, lengthpos, lengthpos+piecewidth, heightpos, heightpos+pieceheight))));
+}
+
+// calculates the texture coordinates to position a smaller rectangle within a rectangle of measures origlength * origwidth (needed for frontwall, sidewall and basement)
+function calcTextureCoordinates(origlength, origwidth, lengthstartpos, lengthendpos, widthstartpos, widthendpos) {
+  return [lengthstartpos/origlength, widthstartpos/origwidth /**/, lengthendpos/origlength, widthstartpos/origwidth /**/, lengthendpos/origlength, widthendpos/origwidth /**/, lengthstartpos/origlength, widthendpos/origwidth]
+}
+
 function createWindow(resources, width, height) {
   let framewidth = height/8;
   let frame = new TextureSGNode(resources.wood_texture, new RenderSGNode(makeTrapeze(width,width,framewidth,0)));
@@ -563,14 +572,14 @@ function createWindow(resources, width, height) {
   return glass;
 }
 // function that creates a trapeze
-function makeTrapeze(length, width, height, offset) {
+function makeTrapeze(length, width, height, offset, texture) {
   width = width || 1;
   height = height || 1;
   length = length || 1;
   offset = offset || 0;
   var position = [0, 0, 0, length, 0, 0, width+offset, height, 0, offset, height, 0];
   var normal = [0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1];
-  var texture = [0, 0 /**/, 1, 0 /**/, 1, 1 /**/, 0, 1];
+  var texture = texture || [0, 0 /**/, 1, 0 /**/, 1, 1 /**/, 0, 1];
   var index = [0, 1, 2, 2, 3, 0];
   return {
     position: position,
@@ -844,7 +853,7 @@ function triggerMovement(timeInMilliseconds){
         // if there is no starttime set it to current time
       }
       // calculate the position depending on the starting time
-      // going back in time if the tardis should take of the planet
+      // going back in time if the tardis should take off of the planet
       let dt=14-(t-tardisstarttime);
 
     } else {
