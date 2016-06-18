@@ -37,18 +37,15 @@ uniform Light u_light;
 uniform Light u_light2;
 uniform SpotLight u_light3;
 uniform SpotLight u_light4;
-uniform Light u_light5;
 
 varying vec3 v_normalVec;
 varying vec3 v_eyeVec;
 varying vec3 v_lightVec;
-//varying vec3 v_light2Vec;
+varying vec3 v_light2Vec;
 varying vec3 v_light3Vec;
 varying vec3 v_light3DirVec;	// need the vector from the spot light to the current processed vertex to limit the illuminated area
 varying vec3 v_light4Vec;
 varying vec3 v_light4DirVec;
-varying vec3 v_light5Vec;
-//varying vec3 v_light5DirVec;
 
 // texturing variables
 uniform bool u_enableTexturing;
@@ -124,8 +121,7 @@ void main (void) {
   }
 
 	gl_FragColor = clamp(calculateSimplePointLight(u_light, u_material, v_lightVec, v_normalVec, v_eyeVec, textureColor) +
-                //calculateSimplePointLight(u_light2, u_material, v_light2Vec, v_normalVec, v_eyeVec, textureColor) +
+                calculateSimplePointLight(u_light2, u_material, v_light2Vec, v_normalVec, v_eyeVec, textureColor) +
 								calculateSimpleSpotLight(u_light3, u_material, v_light3DirVec, v_light3Vec, v_normalVec, v_eyeVec, textureColor) +
-								calculateSimpleSpotLight(u_light4, u_material, v_light4DirVec, v_light4Vec, v_normalVec, v_eyeVec, textureColor) +
-								calculateSimplePointLight(u_light5, u_material, v_light5Vec, v_normalVec, v_eyeVec, textureColor), 0.0, 1.0);
+								calculateSimpleSpotLight(u_light4, u_material, v_light4DirVec, v_light4Vec, v_normalVec, v_eyeVec, textureColor), 0.0, 1.0);
 }

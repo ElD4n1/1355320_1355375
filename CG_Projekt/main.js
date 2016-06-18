@@ -283,19 +283,10 @@ function createSceneGraph(gl, resources) {
     let moonNode = new TextureSGNode(resources.moon_texture,
                       new RenderSGNode(makeSphere(3,10,10)));
 
-
     orbitMoon = new TransformationSGNode(mat4.create());
-
-    let moonLightNode = new LightSGNode();
-    moonLightNode.ambient = [0.0, 0.0, 0.0, 1];
-    moonLightNode.diffuse = [0.4, 0.4, 0.4, 1];
-    moonLightNode.specular = [0.2, 0.2, 0.2, 1];
-    moonLightNode.position = [0, 0, 0];
-    moonLightNode.uniform = 'u_light2';
 
     let translateMoon = new TransformationSGNode(glm.translate(40,-10,-35));
     translateMoon.append(moonNode);
-    translateMoon.append(moonLightNode);
     orbitMoon.append(translateMoon)
     planetNode.append(orbitMoon);
 }
@@ -310,7 +301,7 @@ function createHouseLamp(resources){
   lampLight.ambient = [0.1, 0.1, 0.1, 1];
   lampLight.diffuse = [0.7, 0.7, 0.7, 1];
   lampLight.specular = [0.5, 0.5, 0.5, 1];
-  lampLight.uniform = 'u_light5';
+  lampLight.uniform = 'u_light2';
   let lampbulb = new TransformationSGNode(glm.translate(0,0,0.05),createLightSphere(0.04, resources));
   lampbulb.append(lampLight);
   lamp.append(new TransformationSGNode(glm.transform({translate: [0,0,0.4], rotateX: 180}),
