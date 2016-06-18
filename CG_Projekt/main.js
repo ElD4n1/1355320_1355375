@@ -295,7 +295,6 @@ function createSceneGraph(gl, resources) {
   planetNode.append(orbitMoon);
 }
 
-
   return root;
 }
 // creates a hanging lamp with a lightbulb in te middle
@@ -983,7 +982,6 @@ function moveCamera(timeInMilliseconds){
     camera.direction.x = Math.sin((0.25+t/10)*Math.PI);  //Rotate 90 degrees in 7 seconds
     camera.direction.z = - Math.cos((0.25+t/10)*Math.PI);
 
-
     camera.lookAt.x = camera.position.x + camera.direction.x;
     camera.lookAt.y = camera.position.y + camera.direction.y;
     camera.lookAt.z = camera.position.z + camera.direction.z;
@@ -992,6 +990,7 @@ function moveCamera(timeInMilliseconds){
   cameraFlight = false; // cameraFlight ends after 30 seconds
 }
 
+// swings lamp deppening on time
 function swingLampFunc(timeInMilliseconds){
   var t = timeInMilliseconds /1000;
 
@@ -1001,20 +1000,21 @@ function swingLampFunc(timeInMilliseconds){
 function render(timeInMilliseconds) {
   checkForWindowResize(gl);
 
-
+  // moves smoke particles
   makeSmoke(timeInMilliseconds);
-
+  // moves object deppending on time
   moveTardis(timeInMilliseconds);
   moveDaleks(timeInMilliseconds);
+  swingLampFunc(timeInMilliseconds);
+  // performs cameraFlight
   moveCamera(timeInMilliseconds);
 
-
+  // moves object if camera is near
   triggerMovement(timeInMilliseconds);
 
   //Rotates sun and moon around the planet
   orbitSun.matrix = glm.rotateY(timeInMilliseconds*0.005);
   orbitMoon.matrix = glm.rotateY(timeInMilliseconds*-0.001);
-  swingLampFunc(timeInMilliseconds);
 
   lastrendertime = timeInMilliseconds;
   if (isDoorOpening) {
@@ -1056,7 +1056,6 @@ function initCubeMap(resources) {
   //set sampling parameters
   gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.MIRRORED_REPEAT);
   gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.MIRRORED_REPEAT);
-  //gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_R, gl.MIRRORED_REPEAT); //will be available in WebGL 2
   gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
   //set correct image for each side of the cube map
