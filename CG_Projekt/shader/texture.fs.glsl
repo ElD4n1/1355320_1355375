@@ -120,6 +120,7 @@ void main (void) {
     textureColor = texture2D(u_tex,v_texCoord);
   }
 
+	// determine the fragment coler by combining the influences of all light sources and clamping it to not exceed 1 
 	gl_FragColor = clamp(calculateSimplePointLight(u_light, u_material, v_lightVec, v_normalVec, v_eyeVec, textureColor) +
                 calculateSimplePointLight(u_light2, u_material, v_light2Vec, v_normalVec, v_eyeVec, textureColor) +
 								calculateSimpleSpotLight(u_light3, u_material, v_light3DirVec, v_light3Vec, v_normalVec, v_eyeVec, textureColor) +

@@ -184,7 +184,7 @@ function createSceneGraph(gl, resources) {
 
     root.append(planetNode);
   }
-  // Create a dalek with smok for particle system.
+  // Create a dalek with smoke for particle system.
   let dalek = createDalek();
   let translateSmokingDalek = new TransformationSGNode(glm.transform({ translate: [1.3,-planetrad+0.01,-0.6], scale: scaleObjects*0.8 }));
   translateSmokingDalek.append(dalek);
@@ -195,7 +195,7 @@ function createSceneGraph(gl, resources) {
   translateSmokingDalek.append(new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_particle),smokeNode));
 
   // street lamps
-  //let lampSpotLight1 = new SpotLightSGNode([0,0,0], [(planetrad+0.9)*Math.tan(4), planetrad+0.9, (planetrad+0.9)*Math.tan(-1)], Math.cos(25));
+  //let lampSpotLight1 = new SpotLightSGNode([0,0,0], [(planetrad+0.9)*Math.tan(4), planetrad+0.9, (planetrad+0.9)*Math.tan(-1)], Math.cos(25)); // this would be the correct direction vector that points from the lamp to the planet center, but the simple vector which is pointing down is looking better
   let lampSpotLight1 = new SpotLightSGNode([0,0,0], [0, planetrad+0.9, 0], Math.cos(25));
   lampSpotLight1.ambient = [0.1, 0.1, 0.1, 1];
   lampSpotLight1.diffuse = [0.5, 0.5, 0.5, 1];
@@ -398,11 +398,11 @@ function createDalek(){
 function createHouseLevel0() {
   let length = 6;
   let width = 3;
-  let height = 3.5;
+  let height = 3.5; // the overall height of the house (walls+roof)
   let wallheight = height/3.5 * 2;
   let roofheight = height/3.5 * 1.5;
   let roofwidth = Math.sqrt(Math.pow(roofheight,2) + Math.pow(width/2,2));
-  let house = new MaterialSGNode(new RenderSGNode(makeTrapeze(length,length,width,0)));
+  let house = new MaterialSGNode(new RenderSGNode(makeTrapeze(length,length,width,0))); // ground plate
   let roof = new RenderSGNode(makeTrapeze(length, length, roofwidth, 0));
   let roofside = new RenderSGNode(makeRightTriangle(roofwidth, roofwidth));
 
@@ -419,6 +419,7 @@ function createHouseLevel0() {
   house.append(new TransformationSGNode(glm.translate(0,width/2,height), new TransformationSGNode(glm.rotateX(225), new TransformationSGNode(glm.rotateY(270), roofside))));
   house.append(new TransformationSGNode(glm.translate(length,width/2,height), new TransformationSGNode(glm.rotateX(315), new TransformationSGNode(glm.rotateY(90), roofside))));
 
+  // set color of the house (brick-like)
   house.ambient = [0.05375, 0.05, 0.06625, 1];
   house.diffuse = [ 139/256, 105/256, 105/256, 1];
   house.specular = [ 139/256, 105/256, 105/256, 1];
@@ -441,7 +442,7 @@ function createHouseLevel1(resources) {
   let roofside = new TextureSGNode(resources.roof_side_texture, new RenderSGNode(makeRightTriangle(roofwidth, roofwidth)));
 
   // append walls
-  house.append(new TransformationSGNode(glm.rotateX(90), longwall));
+  house.append(new TransformationSGNode(glm.rotateX(90), longwall));  // front wall
   house.append(new TransformationSGNode(glm.translate(0,width,0),new TransformationSGNode(glm.rotateZ(270),new TransformationSGNode(glm.rotateX(90), sidewall))));
   house.append(new TransformationSGNode(glm.translate(length,0,0),new TransformationSGNode(glm.rotateZ(90),new TransformationSGNode(glm.rotateX(90), sidewall))));
   house.append(new TransformationSGNode(glm.translate(length,width,0),new TransformationSGNode(glm.rotateZ(180),new TransformationSGNode(glm.rotateX(90), longwall))));
@@ -454,8 +455,8 @@ function createHouseLevel1(resources) {
   house.append(new TransformationSGNode(glm.translate(length,width/2,height), new TransformationSGNode(glm.rotateX(315), new TransformationSGNode(glm.rotateY(90), roofside))));
 
   house.ambient = [0.05375, 0.05, 0.06625, 1];
-  house.diffuse = [ 0.18275, 0.17, 0.22525, 1];
-  house.specular = [ 0.332741, 0.328634, 0.346435, 1];
+  house.diffuse = [ 139/256, 105/256, 105/256, 1];
+  house.specular = [ 139/256, 105/256, 105/256, 1];
   house.shininess = 0.4;
 
   return house;
@@ -479,10 +480,10 @@ function createHouseLevel2(resources) {
 
   let house = new MaterialSGNode();
   let longwall = new TextureSGNode(resources.wall_texture, new RenderSGNode(makeTrapeze(length,length,wallheight,0)));
-  let sidewall = new TextureSGNode(resources.wall_texture, new RenderSGNode(makeTrapeze(width,width,wallheight,0, calcTextureCoordinates(length, wallheight, 0, width, 0, wallheight))));//[0, 0 /**/, width/length, 0 /**/, width/length, 1 /**/, 0, 1])));
+  let sidewall = new TextureSGNode(resources.wall_texture, new RenderSGNode(makeTrapeze(width,width,wallheight,0, calcTextureCoordinates(length, wallheight, 0, width, 0, wallheight))));
   let frontwall = new TextureSGNode(resources.wall_texture, new RenderSGNode(makeTrapeze(windowlengthpos, windowlengthpos, wallheight,0, calcTextureCoordinates(length, wallheight, 0, windowlengthpos, 0, wallheight))));
-  let basementlong = new TextureSGNode(resources.wall_texture, new RenderSGNode(makeTrapeze(length,length,basementheight,0, calcTextureCoordinates(length, wallheight, 0, length, 0, basementheight))));//[0, 0 /**/, 1, 0 /**/, 1, basementheight/wallheight /**/, 0, basementheight/wallheight])));
-  let basementside = new TextureSGNode(resources.wall_texture, new RenderSGNode(makeTrapeze(width,width,basementheight,0, calcTextureCoordinates(length, wallheight, 0, width, 0, basementheight))));//[0, 0 /**/, width/length, 0 /**/, width/length, basementheight/wallheight /**/, 0, basementheight/wallheight])));
+  let basementlong = new TextureSGNode(resources.wall_texture, new RenderSGNode(makeTrapeze(length,length,basementheight,0, calcTextureCoordinates(length, wallheight, 0, length, 0, basementheight))));
+  let basementside = new TextureSGNode(resources.wall_texture, new RenderSGNode(makeTrapeze(width,width,basementheight,0, calcTextureCoordinates(length, wallheight, 0, width, 0, basementheight))));
   let roof = new TextureSGNode(resources.roof_texture, new RenderSGNode(makeTrapeze(length, length, roofwidth, 0)));
   let roofside = new TextureSGNode(resources.roof_side_texture, new RenderSGNode(makeRightTriangle(roofwidth, roofwidth)));
   let window = createWindow(resources, windowwidth, windowheight);
@@ -528,8 +529,8 @@ function createHouseLevel2(resources) {
   house.append(new TextureSGNode(resources.door_texture, new TransformationSGNode(glm.translate(doorlengthpos,0,0), rotateDoor)));
 
   house.ambient = [0.05375, 0.05, 0.06625, 1];
-  house.diffuse = [ 0.18275, 0.17, 0.22525, 1];
-  house.specular = [ 0.332741, 0.328634, 0.346435, 1];
+  house.diffuse = [ 139/256, 105/256, 105/256, 1];
+  house.specular = [ 139/256, 105/256, 105/256, 1];
   house.shininess = 0.4;
 
   return house;
@@ -571,7 +572,7 @@ function createWindow(resources, width, height) {
 
   return glass;
 }
-// function that creates a trapeze
+// function that creates a trapeze. optionally also takes texture coordinates to only map a part of the texture on it
 function makeTrapeze(length, width, height, offset, texture) {
   width = width || 1;
   height = height || 1;
@@ -1224,7 +1225,7 @@ function initInteraction(canvas) {
   //register globally
   document.addEventListener('keydown', function(event) {
     //https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent
-    if (event.code === 'KeyR') {
+    if (event.code === 'KeyR') {  // reset the camera to the starting position
       //stop cameraFlight
       cameraFlight = false;
 
