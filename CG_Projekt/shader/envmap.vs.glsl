@@ -2,7 +2,7 @@
  * simple environment mapping shader
  */
 
-//attributes: per vertex inputs in this case the 2d position and its color
+//attributes: per vertex inputs
 attribute vec3 a_position;
 attribute vec3 a_normal;
 
