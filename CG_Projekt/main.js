@@ -189,9 +189,9 @@ function createSceneGraph(gl, resources) {
   let translateSmokingDalek = new TransformationSGNode(glm.transform({ translate: [1.3,-planetrad+0.01,-0.6], scale: scaleObjects*0.8 }));
   translateSmokingDalek.append(dalek);
   planetNode.append(translateSmokingDalek);
+  //create a own node with a semitransparrent texture for particles
   smokeNode = new TextureSGNode(resources.particle_texture) ;
-
-
+  // shade the particles with a different particle shader to increase the performance (no phong shading)
   translateSmokingDalek.append(new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_particle),smokeNode));
 
   // street lamps
@@ -219,10 +219,10 @@ function createSceneGraph(gl, resources) {
   lamp2 = new TransformationSGNode(glm.transform({ rotateX :-2,rotateZ: -1}),new TransformationSGNode(glm.translate(0,-(planetrad+0.9),0), new TransformationSGNode(glm.rotateX(90),new TransformationSGNode(glm.scale(0.4,0.4,0.4),lamp2))));
   planetNode.append(lamp2);
 
-  //planetNode.append(new TransformationSGNode(glm.transform({ rotateX :-2,rotateZ: -1}),new TransformationSGNode(glm.translate(0,-(planetrad+0.9),0), new TransformationSGNode(glm.rotateX(90),new TransformationSGNode(glm.scale(0.4,0.4,0.4),createLamp())))));
-
+  //Create a singing lamp with a pointlight in the house
   swingLamp = new TransformationSGNode(mat4.create(), createHouseLamp(resources));
   planetNode.append(new TransformationSGNode(glm.transform({translate: [1.6,-planetrad-0.35,-0.2], rotateX: 270, scale: scaleObjects}), swingLamp));
+
   //Daleks patroling around planet
   dalekout = new TransformationSGNode(mat4.create(), new TransformationSGNode(glm.transform({translate: [0,-planetrad, 0],scale:scaleObjects*0.8}),createDalek()));
   dalekout.append(new TransformationSGNode(glm.transform({translate: [0.3,-planetrad, -0.5],scale:scaleObjects*0.8}),createDalek()));
@@ -237,7 +237,7 @@ function createSceneGraph(gl, resources) {
   dalekout.append(new TransformationSGNode(glm.rotateX(15),new TransformationSGNode(glm.transform({translate: [-0.3,-planetrad, -0.5],scale:scaleObjects*0.8}),createDalek())));
 
   planetNode.append(dalekout);
-  //Dalek inside the house
+  //Daleks inside the house
   planetNode.append(new TransformationSGNode(glm.transform({translate:[1.8, -planetrad, -0.2], rotateY:220, scale: scaleObjects*0.8}), createDalek()));
   planetNode.append(new TransformationSGNode(glm.transform({translate:[1.6, -planetrad, 0.2], rotateY:180, scale: scaleObjects*0.8}), createDalek()));
 
@@ -255,7 +255,7 @@ function createSceneGraph(gl, resources) {
     tardis.append(new TransformationSGNode(glm.translate(0,0,2), new TextureSGNode(resources.tardis_top, new RenderSGNode(makeRect(0.5,0.5)))));
     rotateTardis = new TransformationSGNode(mat4.create(), new TransformationSGNode(glm.rotateX(90),tardis));
     translateTardis =new TransformationSGNode(glm.translate(-0.25,-19.5,39.5),new TransformationSGNode(glm.scale(scaleObjects,scaleObjects,scaleObjects), rotateTardis));
-
+    // shininess for material wood is 0
     tardis.shininess = 0;
 
     planetNode.append(translateTardis);
@@ -269,40 +269,42 @@ function createSceneGraph(gl, resources) {
   }
 
   //house
-  //must be last because of tranparenzy
-  let level0 = createHouseLevel0(resources);
+  //must be appended last because of tranparency
+  let level0 = createHouseLevel0(resources);      // 3 objects with different levels of detail
   let level1 = createHouseLevel1(resources);
   let level2 = createHouseLevel2(resources);
   let housex = 5.5, housey = -planetrad+0.04, housez = -0;
   let houseNode = new LevelOfDetailSGNode([housex, housey, housez], level0, level1, level2);
+  // append house as LevelOfDetailSGNode which decides depending on the distance from the camera to the houseposition which level of detail is rendered
   planetNode.append(new TransformationSGNode(glm.transform({ translate: [housex, housey, housez], rotateZ: 250, rotateX : 90, scale: scaleObjects }),houseNode));
 
 
 {
-    let moonNode = new TextureSGNode(resources.moon_texture,
-                      new RenderSGNode(makeSphere(3,10,10)));
+  // moon
+  let moonNode = new TextureSGNode(resources.moon_texture,
+                    new RenderSGNode(makeSphere(3,10,10)));
 
+  // TransformationSGNode for rotating the moon around the planet
+  orbitMoon = new TransformationSGNode(mat4.create());
 
-    orbitMoon = new TransformationSGNode(mat4.create());
+  let moonLightNode = new LightSGNode();
+  moonLightNode.ambient = [0.0, 0.0, 0.0, 1];
+  moonLightNode.diffuse = [0.4, 0.4, 0.4, 1];
+  moonLightNode.specular = [0.2, 0.2, 0.2, 1];
+  moonLightNode.position = [0, 0, 0];
+  moonLightNode.uniform = 'u_light2';
 
-    let moonLightNode = new LightSGNode();
-    moonLightNode.ambient = [0.0, 0.0, 0.0, 1];
-    moonLightNode.diffuse = [0.4, 0.4, 0.4, 1];
-    moonLightNode.specular = [0.2, 0.2, 0.2, 1];
-    moonLightNode.position = [0, 0, 0];
-    moonLightNode.uniform = 'u_light2';
-
-    let translateMoon = new TransformationSGNode(glm.translate(40,-10,-35));
-    translateMoon.append(moonNode);
-    translateMoon.append(moonLightNode);
-    orbitMoon.append(translateMoon)
-    planetNode.append(orbitMoon);
+  let translateMoon = new TransformationSGNode(glm.translate(40,-10,-35));
+  translateMoon.append(moonNode);
+  translateMoon.append(moonLightNode);
+  orbitMoon.append(translateMoon)
+  planetNode.append(orbitMoon);
 }
 
 
   return root;
 }
-
+// creates a hanging lamp with a lightbulb in te middle
 function createHouseLamp(resources){
   let lamp = new RenderSGNode(makeZylinder(0.01, 0.3,10));
   let lampLight = new LightSGNode();
@@ -312,11 +314,12 @@ function createHouseLamp(resources){
   lampLight.uniform = 'u_light5';
   let lampbulb = new TransformationSGNode(glm.translate(0,0,0.05),createLightSphere(0.04, resources));
   lampbulb.append(lampLight);
+  // gives the lamp a very trendy texture
   lamp.append(new TransformationSGNode(glm.transform({translate: [0,0,0.4], rotateX: 180}),
-  new TextureSGNode(resources.lamp_texture,  [new RenderSGNode(makeHalfSphere(0.1)),lampbulb])));
+              new TextureSGNode(resources.lamp_texture,  [new RenderSGNode(makeHalfSphere(0.1)),lampbulb])));
   return lamp;
 }
-
+// creates a street lamp without light.
 function createLamp(){
   let lamp = new RenderSGNode(makeHalfSphere(0.3, 10, 10));
   lamp.append(new TransformationSGNode(glm.rotateY(-45), new TransformationSGNode(glm.translate(0,0,0.29), new RenderSGNode(makeZylinder(0.05, 0.5,10)))));
@@ -324,7 +327,7 @@ function createLamp(){
   lamp.append(new TransformationSGNode(glm.translate(-0.6,0,-2.44), new RenderSGNode(makeZylinder(0.05,3,10))));
 
   lamp = new MaterialSGNode(lamp);
-
+  // metalic material
   lamp.ambient = [0.05375, 0.05, 0.06625, 1];
   lamp.diffuse = [ 0.18275, 0.17, 0.22525, 1];
   lamp.specular = [ 0.332741, 0.328634, 0.346435, 1];
@@ -379,15 +382,17 @@ function createDalek(){
   dalek.append(new TransformationSGNode(glm.translate(0.67,-0.8,0.8),new RenderSGNode(makeZylinder(0.02,0.4,10))));
   dalek.append(new TransformationSGNode(glm.translate(0.67,-0.8,0.8),new RenderSGNode(makeSphere(0.04,10,10))));
   dalek.append(new TransformationSGNode(glm.translate(0.67,-0.8,1.245),new TransformationSGNode(glm.rotateX(180),new RenderSGNode(makeHalfSphere(0.05,10,10)))));
+  // create an own node for the head which can be moved
   let dalekHead = new TransformationSGNode(mat4.create(),[new RenderSGNode(makeZylinder(0.025,0.2,10)),
                                         new TransformationSGNode(glm.translate(0,0,0.18), new RenderSGNode(makeSphere(0.04,10,10)))
                                       ]);
+  // all dalek heads are grouped in an array to make the daleks move their eye.
   rotateDalekHead.push(dalekHead);
 
   dalek.append(new TransformationSGNode(glm.translate(0.5,-1,0.75),dalekHead));
 
   dalek = new MaterialSGNode(dalek);
-
+  // make the daleks golden
   dalek.ambient = [0.24725, 0.1995, 0.0745, 1];
   dalek.diffuse = [0.75164, 0.60648, 0.22648, 1];
   dalek.specular = [0.628281, 0.555802, 0.366065, 1];
@@ -563,7 +568,7 @@ function createWindow(resources, width, height) {
 
   return glass;
 }
-
+// function that creates a trapeze
 function makeTrapeze(length, width, height, offset) {
   width = width || 1;
   height = height || 1;
@@ -581,6 +586,7 @@ function makeTrapeze(length, width, height, offset) {
   };
 }
 
+// creates an octagon. the texture is "cut out of the immage"
 function makeOctagon(height, width) {
   width = width || 1;
   height = height || 1;
@@ -619,7 +625,7 @@ function makeZylinder(radius, length, latitudeBands) {
  radius = radius || 2;
  latitudeBands = latitudeBands || 30;
  length = length || 5;
- //based on view-source:http://learningwebgl.com/lessons/lesson11/index.html
+ // based on framework implementation of sphere
  var vertexPositionData = [];
  var normalData = [];
  var textureCoordData = [];
@@ -677,8 +683,7 @@ function makeHalfSphere(radius, latitudeBands, longitudeBands) {
   radius = radius || 2;
   latitudeBands = latitudeBands || 30;
   longitudeBands = longitudeBands || 30;
-
-  //based on view-source:http://learningwebgl.com/lessons/lesson11/index.html
+  // based on framework implementation of sphere
   var vertexPositionData = [];
   var normalData = [];
   var textureCoordData = [];
@@ -727,7 +732,8 @@ function makeHalfSphere(radius, latitudeBands, longitudeBands) {
 }
 
 
-// create Particles
+// create Particles. the class stores the position which is updated deppening on the starttime and the current time
+// if the particle gets too old it is restarted from the beginning
 class Particle extends RenderSGNode {
     constructor(renderer,pos, dir, speed, starttime, children){
       super(renderer,children);
@@ -741,9 +747,7 @@ class Particle extends RenderSGNode {
 
     update(currenttime){
       this.age = currenttime-this.starttime;
-
-
-
+      // thes age for restet
       if(this.age>particleLifeTime){
         this.starttime = currenttime;
         this.age = 0.0;
@@ -751,6 +755,7 @@ class Particle extends RenderSGNode {
         this.position[1] =this.startposition[1];
         this.position[2] = this.startposition[2];
       } else {
+        // calculate the position depending on the age, speed and direction
         this.position[0] = this.startposition[0] +(this.speed * this.age) * this.direction[0] ;
         this.position[1] = this.startposition[1] +(this.speed * this.age) * this.direction[1] ;
         this.position[2] = this.startposition[2] +(this.speed * this.age) * this.direction[2] ;
@@ -758,11 +763,15 @@ class Particle extends RenderSGNode {
     }
 }
 
+// creates numberOfParticels time a particle as Particle class and a TransformationSGNode for positioning each
 function makeSmoke(timeInMilliseconds){
+  // creates another particle if the limit is not reached
   if(paritcleNodes.length<numberOfParticels){
+    // creates a Particle as sphere with random startposition and random speed
     let part = new Particle(makeSphere(0.05,10,10),[Math.random(),0,Math.random()],[0.0,-1.0,0.0],Math.random()/1000+0.0001, timeInMilliseconds);
+    // append particle to the array for updating the position
     particles.push(part);
-
+    // create TransformationSGNode to set the position of the particle
     var n = new TransformationSGNode(mat4.create(),part);
     smokeNode.append(n);
     paritcleNodes.push(n);
@@ -770,6 +779,7 @@ function makeSmoke(timeInMilliseconds){
   var index;
   var p;
   for(index = 0;index<particles.length;index++){
+    // update the positions of all particles with the current time and translate the particles
     p =   particles[index];
     p.update(timeInMilliseconds);
     paritcleNodes[index].matrix = glm.translate(p.position[0], p.position[1], p.position[2]);
@@ -816,6 +826,8 @@ function animateDoorClose(timeInMilliseconds) {
   rotateDoor.matrix = glm.rotateZ(angle);
 }
 
+// when the cameraFlight ended this function checks if the camera is close to
+// triggerable object and then triggers their movement
 function triggerMovement(timeInMilliseconds){
   var x ;
   var y ;
@@ -823,42 +835,49 @@ function triggerMovement(timeInMilliseconds){
   var t = timeInMilliseconds/1000;
 
   if(cameraFlight){
+    // don't trigger if the cameraFlight is still going
     return;
   }
   if(closeToTardis()){
     startTardis = true;
   }
+  //if the camera is close move the tardis
   if(startTardis){
+    // check if tardis was on planet or in space
     if(!tardislanded){
       if(tardisstarttime ==-1.0){
         tardisstarttime = t;
+        // if there is no starttime set it to current time
       }
+      // calculate the position depending on the starting time
+      // going back in time if the tardis should take of the planet
       let dt=14-(t-tardisstarttime);
-      x = -0.3- Math.cos(dt);
-      y = -planetrad+0.1;
-      z = 18.8 * Math.cos(dt * Math.PI/14) +20.0;
+
     } else {
       if(tardisstarttime ==-1.0){
         tardisstarttime = t;        // store time when animation started
       }
+      // calculate the position depending on the starting time
       let dt=(t-tardisstarttime);
-      x = -0.3- Math.cos(dt);
-      y = -planetrad+0.1;
-      z = 18.8 * Math.cos(dt * Math.PI/14) +20.0;
-    }
-  //  console.log("Move Tardis: startTardis="+startTardis + ", t-tardisstarttime="+(t-tardisstarttime) + ", x,y,z=" +x+","+y+","+z);
 
+    }
+    x = -0.3- Math.cos(dt);
+    y = -planetrad+0.1;
+    z = 18.8 * Math.cos(dt * Math.PI/14) +20.0;
+
+    // if the time reaches the 14 seconds stop the tardis movement
     if((t-tardisstarttime)>=13.9){
-      tardislanded = !tardislanded;     //mark tardis as flying in space
+      tardislanded = !tardislanded;     //mark tardis as flying in space or standing on planet
       tardisstarttime = -1.0;   //set starttime to unset
       startTardis = false;      //stop movement of tardis
-      console.log("Stop tardis on planet");
+      tardispos = [x,y,z];      // remember the current position for triggering the movement
     }
+    // rotate tardis if moving
     rotateTardis.matrix = glm.rotateY(timeInMilliseconds*0.1);
-    tardispos = [x,y,z];
+    // update the position
     translateTardis.matrix = glm.translate(x,y,z);
   }
-
+  // if the camera is very close to the door open it to enter.
   if(closeToDoor()){
     //open door to enter
     openDoor();
@@ -866,13 +885,14 @@ function triggerMovement(timeInMilliseconds){
     closeDoor();
   }
 }
+// calculates the distance between camera and door and compares it to a distance level
 function closeToDoor(){
   let distance = getDistance([camera.position.x, camera.position.y, camera.position.z], doorPosition);  // calculate the distance between the camera and the tardis
 
   return distance < 0.3;
 }
 
-
+// calculates the distance between camera and saved tardis position and compares it to a distance level
 function closeToTardis(){
   let distance = getDistance([camera.position.x, camera.position.y, camera.position.z], tardispos);  // calculate the distance between the camera and the tardis
 
@@ -880,6 +900,7 @@ function closeToTardis(){
 
 }
 
+// moves tardis during the first 14 seconds (the camera flight)
 function moveTardis(timeInMilliseconds){
   var x ;
   var y ;
@@ -903,9 +924,11 @@ function moveTardis(timeInMilliseconds){
 
 }
 
+// let the daleks outside patrol around the planet and all daleks except the smoking one move their eye
 function moveDaleks(timeInMilliseconds){
   var t = timeInMilliseconds/1000+13;
 
+  // rotates all daleks outside
   dalekout.matrix = glm.rotateX(30-1.5*t);
   var index;
   //Start index with one so the smoking dalek does not move its eye
@@ -914,33 +937,38 @@ function moveDaleks(timeInMilliseconds){
   }
 }
 
+//moves the camera though the 3 scenes
 function moveCamera(timeInMilliseconds){
   if(!cameraFlight){
     return;
   }
-
+  // calculate time in seconds (easier readable)
   var t = timeInMilliseconds/1000;
 
   if( t<14 ){
     //First scene. Tardis moves to planet.
     camera.position.x = 0;
     camera.position.y = -20.5;
+    // accelerate and stop a little smother
     camera.position.z = 19 * Math.cos(t * Math.PI/14) +21.0;
     return;
   }
   if(t<21){
     if(t>20) {
+      // if close to door open it
       openDoor();
     }
 
     camera.position.x = ((t-14) * (t-14))/49;   //Turn in 7 seconds; divide by 7 *7 for normalization
-    camera.position.y = -20.5 + (t-14)/21;
-    camera.position.z = 2-(t-14)/3.3;                   //Go 1 forward in 7 seconds
+    camera.position.y = -20.5 + (t-14)/21;      // lower camera a little bit
+    camera.position.z = 2-(t-14)/3.3;                   //Go forward
 
+
+    // change direction of camera to look at the house
     camera.direction.x = Math.sin((t-14) * Math.PI/14);  //Rotate 90 degrees in 7 seconds
     camera.direction.z = - Math.cos((t-14) * Math.PI/19);
 
-
+    // update lookat vector depending on the direction
     camera.lookAt.x = camera.position.x + camera.direction.x;
     camera.lookAt.y = camera.position.y + camera.direction.y;
     camera.lookAt.z = camera.position.z + camera.direction.z;
@@ -948,13 +976,14 @@ function moveCamera(timeInMilliseconds){
   }
   if(t<30){
     if(t>29) {
+      // close the Door at the end of the flight
       closeDoor();
     }
-
+    // calculate a curve the camera should make with two polinoms second order
     var x = t-21;
-    camera.position.x = 1-x*x*29/1800+x*341/1800;   //Turn in 7 seconds; divide by 7 *7 for normalization
+    camera.position.x = 1-x*x*29/1800+x*341/1800;
     camera.position.y = -20.16;
-    camera.position.z = -3/25 +x*x*17/1800-149/1800*x;                   //Go 1 forward in 7 seconds
+    camera.position.z = -3/25 +x*x*17/1800-149/1800*x;
 
     camera.direction.x = Math.sin((0.25+t/10)*Math.PI);  //Rotate 90 degrees in 7 seconds
     camera.direction.z = - Math.cos((0.25+t/10)*Math.PI);
