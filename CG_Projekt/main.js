@@ -208,7 +208,6 @@ function createSceneGraph(gl, resources) {
   lamp1 = new TransformationSGNode(glm.transform({ rotateX :4,rotateZ: -1}),new TransformationSGNode(glm.translate(0,-(planetrad+0.9),0), new TransformationSGNode(glm.rotateX(90),new TransformationSGNode(glm.scale(0.4,0.4,0.4),lamp1))));
   planetNode.append(lamp1);
 
-  //let lampSpotLight2 = new SpotLightSGNode([0,0,0], [(planetrad+0.9)*Math.tan(-2), planetrad+0.9, (planetrad+0.9)*Math.tan(-1)], Math.cos(25));
   let lampSpotLight2 = new SpotLightSGNode([0,0,0], [0, planetrad+0.9, 0], Math.cos(25));
   lampSpotLight2.ambient = [0.1, 0.1, 0.1, 1];
   lampSpotLight2.diffuse = [0.5, 0.5, 0.5, 1];
@@ -226,22 +225,23 @@ function createSceneGraph(gl, resources) {
   planetNode.append(new TransformationSGNode(glm.transform({translate: [1.6,-planetrad-0.35,-0.2], rotateX: 270, scale: scaleObjects}), swingLamp));
 
   //Daleks patroling around planet
-  dalekout = new TransformationSGNode(mat4.create(), new TransformationSGNode(glm.transform({translate: [0,-planetrad, 0],scale:scaleObjects*0.8}),createDalek()));
-  dalekout.append(new TransformationSGNode(glm.transform({translate: [0.3,-planetrad, -0.5],scale:scaleObjects*0.8}),createDalek()));
-  dalekout.append(new TransformationSGNode(glm.transform({translate: [-0.3,-planetrad, -0.5],scale:scaleObjects*0.8}),createDalek()));
+  let patdalek = createDalek();
+  dalekout = new TransformationSGNode(mat4.create(), new TransformationSGNode(glm.transform({translate: [0,-planetrad, 0],scale:scaleObjects*0.8}),patdalek));
+  dalekout.append(new TransformationSGNode(glm.transform({translate: [0.3,-planetrad, -0.5],scale:scaleObjects*0.8}),patdalek));
+  dalekout.append(new TransformationSGNode(glm.transform({translate: [-0.3,-planetrad, -0.5],scale:scaleObjects*0.8}),patdalek));
 
-  dalekout.append(new TransformationSGNode(glm.rotateX(30),new TransformationSGNode(glm.transform({translate: [0.3,-planetrad, -0.5],scale:scaleObjects*0.8}),createDalek())));
-  dalekout.append(new TransformationSGNode(glm.rotateX(30),new TransformationSGNode(glm.transform({translate: [-0.3,-planetrad, -0.5],scale:scaleObjects*0.8}),createDalek())));
-  dalekout.append(new TransformationSGNode(glm.rotateX(30),new TransformationSGNode(glm.transform({translate: [0,-planetrad, 0],scale:scaleObjects*0.8}),createDalek())));
+  dalekout.append(new TransformationSGNode(glm.rotateX(30),new TransformationSGNode(glm.transform({translate: [0.3,-planetrad, -0.5],scale:scaleObjects*0.8}),patdalek)));
+  dalekout.append(new TransformationSGNode(glm.rotateX(30),new TransformationSGNode(glm.transform({translate: [-0.3,-planetrad, -0.5],scale:scaleObjects*0.8}),patdalek)));
+  dalekout.append(new TransformationSGNode(glm.rotateX(30),new TransformationSGNode(glm.transform({translate: [0,-planetrad, 0],scale:scaleObjects*0.8}),patdalek)));
 
-  dalekout.append(new TransformationSGNode(glm.rotateX(15),new TransformationSGNode(glm.transform({translate: [0,-planetrad, 0],scale:scaleObjects*0.8}),createDalek())));
-  dalekout.append(new TransformationSGNode(glm.rotateX(15),new TransformationSGNode(glm.transform({translate: [0.3,-planetrad, -0.5],scale:scaleObjects*0.8}),createDalek())));
-  dalekout.append(new TransformationSGNode(glm.rotateX(15),new TransformationSGNode(glm.transform({translate: [-0.3,-planetrad, -0.5],scale:scaleObjects*0.8}),createDalek())));
+  dalekout.append(new TransformationSGNode(glm.rotateX(15),new TransformationSGNode(glm.transform({translate: [0,-planetrad, 0],scale:scaleObjects*0.8}),patdalek)));
+  dalekout.append(new TransformationSGNode(glm.rotateX(15),new TransformationSGNode(glm.transform({translate: [0.3,-planetrad, -0.5],scale:scaleObjects*0.8}),patdalek)));
+  dalekout.append(new TransformationSGNode(glm.rotateX(15),new TransformationSGNode(glm.transform({translate: [-0.3,-planetrad, -0.5],scale:scaleObjects*0.8}),patdalek)));
 
   planetNode.append(dalekout);
   //Daleks inside the house
-  planetNode.append(new TransformationSGNode(glm.transform({translate:[1.8, -planetrad, -0.2], rotateY:220, scale: scaleObjects*0.8}), createDalek()));
-  planetNode.append(new TransformationSGNode(glm.transform({translate:[1.6, -planetrad, 0.2], rotateY:180, scale: scaleObjects*0.8}), createDalek()));
+  planetNode.append(new TransformationSGNode(glm.transform({translate:[1.8, -planetrad, -0.2], rotateY:220, scale: scaleObjects*0.8}), patdalek));
+  planetNode.append(new TransformationSGNode(glm.transform({translate:[1.6, -planetrad, 0.2], rotateY:180, scale: scaleObjects*0.8}), patdalek));
 
 
   {
@@ -282,19 +282,19 @@ function createSceneGraph(gl, resources) {
 
 
 {
-    // moon
-    let moonNode = new TextureSGNode(resources.moon_texture,
-                      new RenderSGNode(makeSphere(3,10,10)));
+  // moon
+  let moonNode = new TextureSGNode(resources.moon_texture,
+                    new RenderSGNode(makeSphere(3,10,10)));
 
-    // TransformationSGNode for rotating the moon around the planet
-    orbitMoon = new TransformationSGNode(mat4.create());
+  // TransformationSGNode for rotating the moon around the planet
+  orbitMoon = new TransformationSGNode(mat4.create());
 
-    let translateMoon = new TransformationSGNode(glm.translate(40,-10,-35));
-    translateMoon.append(moonNode);
-    orbitMoon.append(translateMoon)
-    planetNode.append(orbitMoon);
+
+  let translateMoon = new TransformationSGNode(glm.translate(40,-10,-35));
+  translateMoon.append(moonNode);
+  orbitMoon.append(translateMoon)
+  planetNode.append(orbitMoon);
 }
-
 
   return root;
 }
@@ -480,10 +480,12 @@ function createHouseLevel2(resources) {
 
   let house = new MaterialSGNode();
   let longwall = new TextureSGNode(resources.wall_texture, new RenderSGNode(makeTrapeze(length,length,wallheight,0)));
+
   let sidewall = new TextureSGNode(resources.wall_texture, new RenderSGNode(makeTrapeze(width,width,wallheight,0, calcTextureCoordinates(length, wallheight, 0, width, 0, wallheight))));
   let frontwall = new TextureSGNode(resources.wall_texture, new RenderSGNode(makeTrapeze(windowlengthpos, windowlengthpos, wallheight,0, calcTextureCoordinates(length, wallheight, 0, windowlengthpos, 0, wallheight))));
   let basementlong = new TextureSGNode(resources.wall_texture, new RenderSGNode(makeTrapeze(length,length,basementheight,0, calcTextureCoordinates(length, wallheight, 0, length, 0, basementheight))));
   let basementside = new TextureSGNode(resources.wall_texture, new RenderSGNode(makeTrapeze(width,width,basementheight,0, calcTextureCoordinates(length, wallheight, 0, width, 0, basementheight))));
+
   let roof = new TextureSGNode(resources.roof_texture, new RenderSGNode(makeTrapeze(length, length, roofwidth, 0)));
   let roofside = new TextureSGNode(resources.roof_side_texture, new RenderSGNode(makeRightTriangle(roofwidth, roofwidth)));
   let window = createWindow(resources, windowwidth, windowheight);
@@ -537,14 +539,14 @@ function createHouseLevel2(resources) {
 }
 
 // creates a piece of the front wall with correct position relative to front wall and adjusted texture coordinates
-function createFrontwallPiece(fullwalllength, fullwallheight, piecewidth, pieceheight, lengthpos, heightpos) {
-  return new TransformationSGNode(glm.translate(lengthpos,heightpos,0), new RenderSGNode(makeTrapeze(piecewidth,piecewidth,pieceheight,0, calcTextureCoordinates(fullwalllength, fullwallheight, lengthpos, lengthpos+piecewidth, heightpos, heightpos+pieceheight))));
-}
+ function createFrontwallPiece(fullwalllength, fullwallheight, piecewidth, pieceheight, lengthpos, heightpos) {
+   return new TransformationSGNode(glm.translate(lengthpos,heightpos,0), new RenderSGNode(makeTrapeze(piecewidth,piecewidth,pieceheight,0, calcTextureCoordinates(fullwalllength, fullwallheight, lengthpos, lengthpos+piecewidth, heightpos, heightpos+pieceheight))));
+ }
 
-// calculates the texture coordinates to position a smaller rectangle within a rectangle of measures origlength * origwidth (needed for frontwall, sidewall and basement)
-function calcTextureCoordinates(origlength, origwidth, lengthstartpos, lengthendpos, widthstartpos, widthendpos) {
-  return [lengthstartpos/origlength, widthstartpos/origwidth /**/, lengthendpos/origlength, widthstartpos/origwidth /**/, lengthendpos/origlength, widthendpos/origwidth /**/, lengthstartpos/origlength, widthendpos/origwidth]
-}
+ // calculates the texture coordinates to position a smaller rectangle within a rectangle of measures origlength * origwidth (needed for frontwall, sidewall and basement)
+ function calcTextureCoordinates(origlength, origwidth, lengthstartpos, lengthendpos, widthstartpos, widthendpos) {
+   return [lengthstartpos/origlength, widthstartpos/origwidth /**/, lengthendpos/origlength, widthstartpos/origwidth /**/, lengthendpos/origlength, widthendpos/origwidth /**/, lengthstartpos/origlength, widthendpos/origwidth]
+ }
 
 function createWindow(resources, width, height) {
   let framewidth = height/8;
@@ -572,6 +574,7 @@ function createWindow(resources, width, height) {
 
   return glass;
 }
+
 // function that creates a trapeze. optionally also takes texture coordinates to only map a part of the texture on it
 function makeTrapeze(length, width, height, offset, texture) {
   width = width || 1;
@@ -849,20 +852,21 @@ function triggerMovement(timeInMilliseconds){
   if(startTardis){
     // check if tardis was on planet or in space
     if(!tardislanded){
+      var dt;
       if(tardisstarttime ==-1.0){
         tardisstarttime = t;
         // if there is no starttime set it to current time
       }
       // calculate the position depending on the starting time
-      // going back in time if the tardis should take off of the planet
-      let dt=14-(t-tardisstarttime);
+      // going back in time if the tardis should take of the planet
+      dt=14-(t-tardisstarttime);
 
     } else {
       if(tardisstarttime ==-1.0){
         tardisstarttime = t;        // store time when animation started
       }
       // calculate the position depending on the starting time
-      let dt=(t-tardisstarttime);
+      dt=(t-tardisstarttime);
 
     }
     x = -0.3- Math.cos(dt);
@@ -992,7 +996,6 @@ function moveCamera(timeInMilliseconds){
     camera.direction.x = Math.sin((0.25+t/10)*Math.PI);  //Rotate 90 degrees in 7 seconds
     camera.direction.z = - Math.cos((0.25+t/10)*Math.PI);
 
-
     camera.lookAt.x = camera.position.x + camera.direction.x;
     camera.lookAt.y = camera.position.y + camera.direction.y;
     camera.lookAt.z = camera.position.z + camera.direction.z;
@@ -1001,6 +1004,7 @@ function moveCamera(timeInMilliseconds){
   cameraFlight = false; // cameraFlight ends after 30 seconds
 }
 
+// swings lamp deppening on time
 function swingLampFunc(timeInMilliseconds){
   var t = timeInMilliseconds /1000;
 
@@ -1010,20 +1014,21 @@ function swingLampFunc(timeInMilliseconds){
 function render(timeInMilliseconds) {
   checkForWindowResize(gl);
 
-
+  // moves smoke particles
   makeSmoke(timeInMilliseconds);
-
+  // moves object deppending on time
   moveTardis(timeInMilliseconds);
   moveDaleks(timeInMilliseconds);
+  swingLampFunc(timeInMilliseconds);
+  // performs cameraFlight
   moveCamera(timeInMilliseconds);
 
-
+  // moves object if camera is near
   triggerMovement(timeInMilliseconds);
 
   //Rotates sun and moon around the planet
   orbitSun.matrix = glm.rotateY(timeInMilliseconds*0.005);
   orbitMoon.matrix = glm.rotateY(timeInMilliseconds*-0.001);
-  swingLampFunc(timeInMilliseconds);
 
   lastrendertime = timeInMilliseconds;
   if (isDoorOpening) {
@@ -1065,7 +1070,6 @@ function initCubeMap(resources) {
   //set sampling parameters
   gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.MIRRORED_REPEAT);
   gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.MIRRORED_REPEAT);
-  //gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_R, gl.MIRRORED_REPEAT); //will be available in WebGL 2
   gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
   //set correct image for each side of the cube map
