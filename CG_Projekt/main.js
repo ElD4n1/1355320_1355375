@@ -166,7 +166,7 @@ function createSceneGraph(gl, resources) {
     translateLight.append(lightNode);
     // create a lightsphere to make the sun visible
     translateLight.append(createLightSphere(1.9, resources));
-    root.append(new TransformationSGNode(glm.rotateX(90),orbitSun));
+    root.append(new TransformationSGNode(glm.transform({ rotateX:90, rotateY:-135 }),orbitSun));
   }
 
   {
@@ -195,7 +195,8 @@ function createSceneGraph(gl, resources) {
   translateSmokingDalek.append(new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_particle),smokeNode));
 
   // street lamps
-  let lampSpotLight1 = new SpotLightSGNode([0,0,0], [0, planetrad+0.9, 0], 0.94);
+  //let lampSpotLight1 = new SpotLightSGNode([0,0,0], [(planetrad+0.9)*Math.tan(4), planetrad+0.9, (planetrad+0.9)*Math.tan(-1)], Math.cos(25));
+  let lampSpotLight1 = new SpotLightSGNode([0,0,0], [0, planetrad+0.9, 0], Math.cos(25));
   lampSpotLight1.ambient = [0.1, 0.1, 0.1, 1];
   lampSpotLight1.diffuse = [0.5, 0.5, 0.5, 1];
   lampSpotLight1.specular = [0.3, 0.3, 0.3, 1];
@@ -204,13 +205,14 @@ function createSceneGraph(gl, resources) {
   let lamp1 = createLamp();
   lamp1.append(lampSpotLight1);
   lamp1.append(createLightSphere(0.2, resources));
-  lamp1 = new TransformationSGNode(glm.transform({ rotateX :3,rotateZ: -1}),new TransformationSGNode(glm.translate(0,-(planetrad+0.9),0), new TransformationSGNode(glm.rotateX(90),new TransformationSGNode(glm.scale(0.4,0.4,0.4),lamp1))));
+  lamp1 = new TransformationSGNode(glm.transform({ rotateX :4,rotateZ: -1}),new TransformationSGNode(glm.translate(0,-(planetrad+0.9),0), new TransformationSGNode(glm.rotateX(90),new TransformationSGNode(glm.scale(0.4,0.4,0.4),lamp1))));
   planetNode.append(lamp1);
 
-  let lampSpotLight2 = new SpotLightSGNode([0,0,0], [0, planetrad+0.9, 0], 0.94);
+  //let lampSpotLight2 = new SpotLightSGNode([0,0,0], [(planetrad+0.9)*Math.tan(-2), planetrad+0.9, (planetrad+0.9)*Math.tan(-1)], Math.cos(25));
+  let lampSpotLight2 = new SpotLightSGNode([0,0,0], [0, planetrad+0.9, 0], Math.cos(25));
   lampSpotLight2.ambient = [0.1, 0.1, 0.1, 1];
-  lampSpotLight1.diffuse = [0.5, 0.5, 0.5, 1];
-  lampSpotLight1.specular = [0.3, 0.3, 0.3, 1];
+  lampSpotLight2.diffuse = [0.5, 0.5, 0.5, 1];
+  lampSpotLight2.specular = [0.3, 0.3, 0.3, 1];
   lampSpotLight2.uniform = 'u_light4';
 
   let lamp2 = createLamp();
@@ -219,8 +221,7 @@ function createSceneGraph(gl, resources) {
   lamp2 = new TransformationSGNode(glm.transform({ rotateX :-2,rotateZ: -1}),new TransformationSGNode(glm.translate(0,-(planetrad+0.9),0), new TransformationSGNode(glm.rotateX(90),new TransformationSGNode(glm.scale(0.4,0.4,0.4),lamp2))));
   planetNode.append(lamp2);
 
-  //planetNode.append(new TransformationSGNode(glm.transform({ rotateX :-2,rotateZ: -1}),new TransformationSGNode(glm.translate(0,-(planetrad+0.9),0), new TransformationSGNode(glm.rotateX(90),new TransformationSGNode(glm.scale(0.4,0.4,0.4),createLamp())))));
-
+  // house lamp
   swingLamp = new TransformationSGNode(mat4.create(), createHouseLamp(resources));
   planetNode.append(new TransformationSGNode(glm.transform({translate: [1.6,-planetrad-0.35,-0.2], rotateX: 270, scale: scaleObjects}), swingLamp));
   //Daleks patroling around planet

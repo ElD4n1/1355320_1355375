@@ -42,11 +42,8 @@ void main() {
 	v_light4Vec = u_light4Pos - eyePosition.xyz;
 	v_light5Vec = u_light5Pos - eyePosition.xyz;
 
-	//vec3 vertexVec = vec3(u_modelView *a_position);	// compute the vector to the currently processed vertex
-	//v_light3DirVec = u_light3Pos - a_position;
 	v_light3DirVec = (vec4((u_light3Pos - a_position),1) * u_modelView).xyz;	// compute the light direction, i.e. the vector from the spot light to the vertex being processed
 	v_light4DirVec = (vec4((u_light4Pos - a_position),1) * u_modelView).xyz;
-	//v_light5DirVec = (vec4((u_light5Pos - a_position),1) * u_modelView).xyz;
 
 	//pass on texture coordinates to fragment shader
 	v_texCoord = a_texCoord;
