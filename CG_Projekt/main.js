@@ -78,11 +78,14 @@ var cameraFlight = true;
 
 //load the required resources using a utility function
 loadResources({
+  // shader:
   vs_env: 'shader/envmap.vs.glsl',
   fs_env: 'shader/envmap.fs.glsl',
   vs_texture: 'shader/texture.vs.glsl',
   fs_texture: 'shader/texture.fs.glsl',
+  vs_particle: 'shader/particle.vs.glsl',
   fs_particle: 'shader/particle.fs.glsl',
+  vs_light: 'shader/lightsphere.vs.glsl',
   fs_light: 'shader/lightsphere.fs.glsl',
 // Cubemap:
   env_pos_x: 'models/skybox/Galaxy_RT.jpg',
@@ -133,7 +136,7 @@ function init(resources) {
 }
 
 function createLightSphere(rad, resources) {
-  return new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_light), [
+  return new ShaderSGNode(createProgram(gl, resources.vs_light, resources.fs_light), [
     //render with light fragment shader to make it bright.
     new RenderSGNode(makeSphere(rad,10,10)) // Parameters: radius, latitudeBands, longitudeBands (how round it is)
   ]);
@@ -192,7 +195,7 @@ function createSceneGraph(gl, resources) {
   //create a own node with a semitransparrent texture for particles
   smokeNode = new TextureSGNode(resources.particle_texture) ;
   // shade the particles with a different particle shader to increase the performance (no phong shading)
-  translateSmokingDalek.append(new ShaderSGNode(createProgram(gl, resources.vs_texture, resources.fs_particle),smokeNode));
+  translateSmokingDalek.append(new ShaderSGNode(createProgram(gl, resources.vs_particle, resources.fs_particle),smokeNode));
 
   // street lamps
   //let lampSpotLight1 = new SpotLightSGNode([0,0,0], [(planetrad+0.9)*Math.tan(4), planetrad+0.9, (planetrad+0.9)*Math.tan(-1)], Math.cos(25)); // this would be the correct direction vector that points from the lamp to the planet center, but the simple vector which is pointing down is looking better

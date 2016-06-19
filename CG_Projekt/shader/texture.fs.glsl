@@ -74,7 +74,13 @@ vec4 calculateSimplePointLight(Light light, Material material, vec3 lightVec, ve
 	vec4 c_spec = clamp(spec * light.specular * material.specular, 0.0, 1.0);
 	vec4 c_em   = material.emission;
 
-  return c_amb + c_diff + c_spec + c_em;
+	vec4 color = c_amb + c_diff + c_spec + c_em;
+
+	if(u_enableTexturing) {
+		color.a = textureColor.a;	// take the alpha value of the texture
+	}
+
+  return color;
 }
 
 vec4 calculateSimpleSpotLight(SpotLight light, Material material, vec3 lightDirVec, vec3 lightVec, vec3 normalVec, vec3 eyeVec, vec4 textureColor) {
@@ -109,7 +115,13 @@ vec4 calculateSimpleSpotLight(SpotLight light, Material material, vec3 lightDirV
 		}
 	}
 
-  return c_amb + c_diff + c_spec + c_em;
+	vec4 color = c_amb + c_diff + c_spec + c_em;
+
+	if(u_enableTexturing) {
+		color.a = textureColor.a;	// take the alpha value of the texture
+	}
+
+  return color;
 }
 
 void main (void) {
@@ -120,7 +132,7 @@ void main (void) {
     textureColor = texture2D(u_tex,v_texCoord);
   }
 
-	// determine the fragment coler by combining the influences of all light sources and clamping it to not exceed 1 
+	// determine the fragment coler by combining the influences of all light sources and clamping it to not exceed 1
 	gl_FragColor = clamp(calculateSimplePointLight(u_light, u_material, v_lightVec, v_normalVec, v_eyeVec, textureColor) +
                 calculateSimplePointLight(u_light2, u_material, v_light2Vec, v_normalVec, v_eyeVec, textureColor) +
 								calculateSimpleSpotLight(u_light3, u_material, v_light3DirVec, v_light3Vec, v_normalVec, v_eyeVec, textureColor) +
