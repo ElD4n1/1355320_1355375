@@ -37,7 +37,7 @@ var translateTardis;
 var rotateTardis;
 var rotateDoor;
 var swingLamp;
-// Array of all heads of the daleks. Rotate all heads togehter
+// Array of all heads of the daleks. Rotate all heads together
 var rotateDalekHead = [];
 var dalekout;
 var smokeNode;
@@ -947,8 +947,8 @@ function moveDaleks(timeInMilliseconds){
   // rotates all daleks outside
   dalekout.matrix = glm.rotateX(30-1.5*t);
   var index;
-  //Start index with one so the smoking dalek does not move its eye
-  for(index =1;index<rotateDalekHead.length;index++){
+  // stop one index before so that the smoking dalek doesn't move
+  for(index =0;index<rotateDalekHead.length-1;index++){
     rotateDalekHead[index].matrix = glm.rotateY(30*Math.sin(t));
   }
 }
