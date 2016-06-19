@@ -187,65 +187,55 @@ function createSceneGraph(gl, resources) {
 
     root.append(planetNode);
   }
-  // Create a dalek with smoke for particle system.
-  let dalek = createDalek();
-  let translateSmokingDalek = new TransformationSGNode(glm.transform({ translate: [1.3,-planetrad+0.01,-0.6], scale: scaleObjects*0.8 }));
-  translateSmokingDalek.append(dalek);
-  planetNode.append(translateSmokingDalek);
-  //create a own node with a semitransparrent texture for particles
-  smokeNode = new TextureSGNode(resources.particle_texture) ;
-  // shade the particles with a different particle shader to increase the performance (no phong shading)
-  translateSmokingDalek.append(new ShaderSGNode(createProgram(gl, resources.vs_particle, resources.fs_particle),smokeNode));
 
-  // street lamps
-  //let lampSpotLight1 = new SpotLightSGNode([0,0,0], [(planetrad+0.9)*Math.tan(4), planetrad+0.9, (planetrad+0.9)*Math.tan(-1)], Math.cos(25)); // this would be the correct direction vector that points from the lamp to the planet center, but the simple vector which is pointing down is looking better
-  let lampSpotLight1 = new SpotLightSGNode([0,0,0], [0, planetrad+0.9, 0], Math.cos(25));
-  lampSpotLight1.ambient = [0.1, 0.1, 0.1, 1];
-  lampSpotLight1.diffuse = [0.5, 0.5, 0.5, 1];
-  lampSpotLight1.specular = [0.3, 0.3, 0.3, 1];
-  lampSpotLight1.uniform = 'u_light3';
+  {
+    // street lamps
+    //let lampSpotLight1 = new SpotLightSGNode([0,0,0], [(planetrad+0.9)*Math.tan(4), planetrad+0.9, (planetrad+0.9)*Math.tan(-1)], Math.cos(25)); // this would be the correct direction vector that points from the lamp to the planet center, but the simple vector which is pointing down is looking better
+    let lampSpotLight1 = new SpotLightSGNode([0,0,0], [0, planetrad+0.9, 0], Math.cos(25));
+    lampSpotLight1.ambient = [0.1, 0.1, 0.1, 1];
+    lampSpotLight1.diffuse = [0.5, 0.5, 0.5, 1];
+    lampSpotLight1.specular = [0.3, 0.3, 0.3, 1];
+    lampSpotLight1.uniform = 'u_light3';
 
-  let lamp1 = createLamp();
-  lamp1.append(lampSpotLight1);
-  lamp1.append(createLightSphere(0.2, resources));
-  lamp1 = new TransformationSGNode(glm.transform({ rotateX :4,rotateZ: -1}),new TransformationSGNode(glm.translate(0,-(planetrad+0.9),0), new TransformationSGNode(glm.rotateX(90),new TransformationSGNode(glm.scale(0.4,0.4,0.4),lamp1))));
-  planetNode.append(lamp1);
+    let lamp1 = createLamp();
+    lamp1.append(lampSpotLight1);
+    lamp1.append(createLightSphere(0.2, resources));
+    lamp1 = new TransformationSGNode(glm.transform({ rotateX :4,rotateZ: -1}),new TransformationSGNode(glm.translate(0,-(planetrad+0.9),0), new TransformationSGNode(glm.rotateX(90),new TransformationSGNode(glm.scale(0.4,0.4,0.4),lamp1))));
+    planetNode.append(lamp1);
 
-  let lampSpotLight2 = new SpotLightSGNode([0,0,0], [0, planetrad+0.9, 0], Math.cos(25));
-  lampSpotLight2.ambient = [0.1, 0.1, 0.1, 1];
-  lampSpotLight2.diffuse = [0.5, 0.5, 0.5, 1];
-  lampSpotLight2.specular = [0.3, 0.3, 0.3, 1];
-  lampSpotLight2.uniform = 'u_light4';
+    let lampSpotLight2 = new SpotLightSGNode([0,0,0], [0, planetrad+0.9, 0], Math.cos(25));
+    lampSpotLight2.ambient = [0.1, 0.1, 0.1, 1];
+    lampSpotLight2.diffuse = [0.5, 0.5, 0.5, 1];
+    lampSpotLight2.specular = [0.3, 0.3, 0.3, 1];
+    lampSpotLight2.uniform = 'u_light4';
 
-  let lamp2 = createLamp();
-  lamp2.append(lampSpotLight2);
-  lamp2.append(createLightSphere(0.2, resources));
-  lamp2 = new TransformationSGNode(glm.transform({ rotateX :-2,rotateZ: -1}),new TransformationSGNode(glm.translate(0,-(planetrad+0.9),0), new TransformationSGNode(glm.rotateX(90),new TransformationSGNode(glm.scale(0.4,0.4,0.4),lamp2))));
-  planetNode.append(lamp2);
+    let lamp2 = createLamp();
+    lamp2.append(lampSpotLight2);
+    lamp2.append(createLightSphere(0.2, resources));
+    lamp2 = new TransformationSGNode(glm.transform({ rotateX :-2,rotateZ: -1}),new TransformationSGNode(glm.translate(0,-(planetrad+0.9),0), new TransformationSGNode(glm.rotateX(90),new TransformationSGNode(glm.scale(0.4,0.4,0.4),lamp2))));
+    planetNode.append(lamp2);
+  }
 
-  //Create a swinging lamp with a pointlight in the house
-  swingLamp = new TransformationSGNode(mat4.create(), createHouseLamp(resources));
-  planetNode.append(new TransformationSGNode(glm.transform({translate: [1.6,-planetrad-0.35,-0.2], rotateX: 270, scale: scaleObjects}), swingLamp));
+  {
+    //Daleks patroling around planet
+    let patdalek = createDalek();
+    dalekout = new TransformationSGNode(mat4.create(), new TransformationSGNode(glm.transform({translate: [0,-planetrad, 0],scale:scaleObjects*0.8}),patdalek));
+    dalekout.append(new TransformationSGNode(glm.transform({translate: [0.3,-planetrad, -0.5],scale:scaleObjects*0.8}),patdalek));
+    dalekout.append(new TransformationSGNode(glm.transform({translate: [-0.3,-planetrad, -0.5],scale:scaleObjects*0.8}),patdalek));
 
-  //Daleks patroling around planet
-  let patdalek = createDalek();
-  dalekout = new TransformationSGNode(mat4.create(), new TransformationSGNode(glm.transform({translate: [0,-planetrad, 0],scale:scaleObjects*0.8}),patdalek));
-  dalekout.append(new TransformationSGNode(glm.transform({translate: [0.3,-planetrad, -0.5],scale:scaleObjects*0.8}),patdalek));
-  dalekout.append(new TransformationSGNode(glm.transform({translate: [-0.3,-planetrad, -0.5],scale:scaleObjects*0.8}),patdalek));
+    dalekout.append(new TransformationSGNode(glm.rotateX(30),new TransformationSGNode(glm.transform({translate: [0.3,-planetrad, -0.5],scale:scaleObjects*0.8}),patdalek)));
+    dalekout.append(new TransformationSGNode(glm.rotateX(30),new TransformationSGNode(glm.transform({translate: [-0.3,-planetrad, -0.5],scale:scaleObjects*0.8}),patdalek)));
+    dalekout.append(new TransformationSGNode(glm.rotateX(30),new TransformationSGNode(glm.transform({translate: [0,-planetrad, 0],scale:scaleObjects*0.8}),patdalek)));
 
-  dalekout.append(new TransformationSGNode(glm.rotateX(30),new TransformationSGNode(glm.transform({translate: [0.3,-planetrad, -0.5],scale:scaleObjects*0.8}),patdalek)));
-  dalekout.append(new TransformationSGNode(glm.rotateX(30),new TransformationSGNode(glm.transform({translate: [-0.3,-planetrad, -0.5],scale:scaleObjects*0.8}),patdalek)));
-  dalekout.append(new TransformationSGNode(glm.rotateX(30),new TransformationSGNode(glm.transform({translate: [0,-planetrad, 0],scale:scaleObjects*0.8}),patdalek)));
+    dalekout.append(new TransformationSGNode(glm.rotateX(15),new TransformationSGNode(glm.transform({translate: [0,-planetrad, 0],scale:scaleObjects*0.8}),patdalek)));
+    dalekout.append(new TransformationSGNode(glm.rotateX(15),new TransformationSGNode(glm.transform({translate: [0.3,-planetrad, -0.5],scale:scaleObjects*0.8}),patdalek)));
+    dalekout.append(new TransformationSGNode(glm.rotateX(15),new TransformationSGNode(glm.transform({translate: [-0.3,-planetrad, -0.5],scale:scaleObjects*0.8}),patdalek)));
 
-  dalekout.append(new TransformationSGNode(glm.rotateX(15),new TransformationSGNode(glm.transform({translate: [0,-planetrad, 0],scale:scaleObjects*0.8}),patdalek)));
-  dalekout.append(new TransformationSGNode(glm.rotateX(15),new TransformationSGNode(glm.transform({translate: [0.3,-planetrad, -0.5],scale:scaleObjects*0.8}),patdalek)));
-  dalekout.append(new TransformationSGNode(glm.rotateX(15),new TransformationSGNode(glm.transform({translate: [-0.3,-planetrad, -0.5],scale:scaleObjects*0.8}),patdalek)));
-
-  planetNode.append(dalekout);
-  //Daleks inside the house
-  planetNode.append(new TransformationSGNode(glm.transform({translate:[1.8, -planetrad, -0.2], rotateY:220, scale: scaleObjects*0.8}), patdalek));
-  planetNode.append(new TransformationSGNode(glm.transform({translate:[1.6, -planetrad, 0.2], rotateY:180, scale: scaleObjects*0.8}), patdalek));
-
+    planetNode.append(dalekout);
+    //Daleks inside the house
+    planetNode.append(new TransformationSGNode(glm.transform({translate:[1.8, -planetrad, -0.2], rotateY:220, scale: scaleObjects*0.8}), patdalek));
+    planetNode.append(new TransformationSGNode(glm.transform({translate:[1.6, -planetrad, 0.2], rotateY:180, scale: scaleObjects*0.8}), patdalek));
+  }
 
   {
     //tardis
@@ -273,31 +263,32 @@ function createSceneGraph(gl, resources) {
     planetNode.append(new TransformationSGNode(glm.transform({rotateX:-3, rotateZ: -1}),new TransformationSGNode(glm.translate(0,-planetrad+0.1,0),stopsign)));
   }
 
-  //house
-  //must be appended last because of tranparency
-  let level0 = createHouseLevel0(resources);      // 3 objects with different levels of detail
-  let level1 = createHouseLevel1(resources);
-  let level2 = createHouseLevel2(resources);
-  let housex = 5.5, housey = -planetrad+0.04, housez = -0;
-  let houseNode = new LevelOfDetailSGNode([housex, housey, housez], level0, level1, level2);
-  // append house as LevelOfDetailSGNode which decides depending on the distance from the camera to the houseposition which level of detail is rendered
-  planetNode.append(new TransformationSGNode(glm.transform({ translate: [housex, housey, housez], rotateZ: 250, rotateX : 90, scale: scaleObjects }),houseNode));
+  {
+    //house
+    //must be appended last because of tranparency
+    let level0 = createHouseLevel0(resources);      // 3 objects with different levels of detail
+    let level1 = createHouseLevel1(resources);
+    let level2 = createHouseLevel2(resources);
+    let housex = 5.5, housey = -planetrad+0.04, housez = -0;
+    let houseNode = new LevelOfDetailSGNode([housex, housey, housez], level0, level1, level2);
+    // append house as LevelOfDetailSGNode which decides depending on the distance from the camera to the houseposition which level of detail is rendered
+    planetNode.append(new TransformationSGNode(glm.transform({ translate: [housex, housey, housez], rotateZ: 250, rotateX : 90, scale: scaleObjects }),houseNode));
+  }
+
+  {
+    // moon
+    let moonNode = new TextureSGNode(resources.moon_texture,
+                      new RenderSGNode(makeSphere(3,10,10)));
+
+    // TransformationSGNode for rotating the moon around the planet
+    orbitMoon = new TransformationSGNode(mat4.create());
 
 
-{
-  // moon
-  let moonNode = new TextureSGNode(resources.moon_texture,
-                    new RenderSGNode(makeSphere(3,10,10)));
-
-  // TransformationSGNode for rotating the moon around the planet
-  orbitMoon = new TransformationSGNode(mat4.create());
-
-
-  let translateMoon = new TransformationSGNode(glm.translate(40,-10,-35));
-  translateMoon.append(moonNode);
-  orbitMoon.append(translateMoon)
-  planetNode.append(orbitMoon);
-}
+    let translateMoon = new TransformationSGNode(glm.translate(40,-10,-35));
+    translateMoon.append(moonNode);
+    orbitMoon.append(translateMoon)
+    planetNode.append(orbitMoon);
+  }
 
   return root;
 }
@@ -525,6 +516,16 @@ function createHouseLevel2(resources) {
   house.append(new TransformationSGNode(glm.translate(length,0,-basementheight),new TransformationSGNode(glm.rotateZ(90),new TransformationSGNode(glm.rotateX(90), basementside))));
   house.append(new TransformationSGNode(glm.translate(length,width,-basementheight),new TransformationSGNode(glm.rotateZ(180),new TransformationSGNode(glm.rotateX(90), basementlong))));
 
+  // Create a dalek with smoke for particle system.
+  let dalek = createDalek();
+  let translateSmokingDalek = new TransformationSGNode(glm.transform({ translate: [5*length/6,width-width/3,0], rotateX: -90, rotateY: 215}));
+  translateSmokingDalek.append(dalek);
+  house.append(translateSmokingDalek);
+  //create a own node with a semitransparrent texture for particles
+  smokeNode = new TextureSGNode(resources.particle_texture) ;
+  // shade the particles with a different particle shader to increase the performance (no phong shading)
+  translateSmokingDalek.append(new ShaderSGNode(createProgram(gl, resources.vs_particle, resources.fs_particle),smokeNode));
+
   // windows
   house.append(new TransformationSGNode(glm.translate(windowlengthpos,0,windowheightpos), new TransformationSGNode(glm.rotateX(90), window)));
   house.append(new TransformationSGNode(glm.translate(length - windowwidth - windowlengthpos,0,windowheightpos), new TransformationSGNode(glm.rotateX(90), window)));
@@ -532,6 +533,10 @@ function createHouseLevel2(resources) {
   // door
   rotateDoor = new TransformationSGNode(mat4.create(), new TransformationSGNode(glm.rotateX(90), new RenderSGNode(makeTrapeze(doorwidth,doorwidth,doorheight,0))));
   house.append(new TextureSGNode(resources.door_texture, new TransformationSGNode(glm.translate(doorlengthpos,0,0), rotateDoor)));
+
+  // create a swinging lamp with a pointlight in the house
+  swingLamp = new TransformationSGNode(mat4.create(), createHouseLamp(resources));
+  ceiling.append(new TransformationSGNode(glm.transform({translate: [length/3,width/2,-0.2], rotateX: 180}), swingLamp));
 
   house.ambient = [0.05375, 0.05, 0.06625, 1];
   house.diffuse = [ 139/256, 105/256, 105/256, 1];
